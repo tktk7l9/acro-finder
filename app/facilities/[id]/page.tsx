@@ -109,7 +109,9 @@ export default async function FacilityPage({ params }: Props) {
               <div className="v">{facility.address}</div>
               {pref && slug && (
                 <div className="sub" style={{ marginTop: 6 }}>
-                  <Link href={`/area/${slug}`}>{pref.name}の施設をすべて見る →</Link>
+                  <Link href={`/area/${slug}`} prefetch={false}>
+                    {pref.name}の施設をすべて見る →
+                  </Link>
                 </div>
               )}
             </div>
@@ -268,7 +270,7 @@ export default async function FacilityPage({ params }: Props) {
           <section className="detail-section">
             <h2 className="detail-section-title">
               {pref.name}の他の施設
-              <Link href={`/area/${slug}`} className="section-more">
+              <Link href={`/area/${slug}`} className="section-more" prefetch={false}>
                 すべて見る →
               </Link>
             </h2>

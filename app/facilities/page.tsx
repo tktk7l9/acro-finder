@@ -45,7 +45,11 @@ export default async function FacilitiesIndexPage() {
                 {g.prefecture.name}
                 <span className="count">（{g.facilities.length}）</span>
               </h2>
-              <Link href={`/area/${g.slug}`}>このエリアを見る →</Link>
+              {/* 都道府県ぶん並ぶうえ、リンク先の area ページは 1 件あたり約 57KB。
+                  force-dynamic でキャッシュが効かないため先読みは切る。 */}
+              <Link href={`/area/${g.slug}`} prefetch={false}>
+                このエリアを見る →
+              </Link>
             </div>
             <div className="area-grid">
               {g.facilities.map((f) => (
