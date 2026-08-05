@@ -1,3 +1,4 @@
+import { useSyncExternalStore } from "react";
 import type { Skill, SkillGenre } from "@/lib/skills-data";
 
 // プログラム生成のスキルアート。技ごとに固有・決定的なモーション図を描く。
@@ -52,11 +53,40 @@ function arcPath(cx: number, cy: number, r: number, a0: number, a1: number): str
   return `M ${x0.toFixed(1)} ${y0.toFixed(1)} A ${r} ${r} 0 ${large} 1 ${x1.toFixed(1)} ${y1.toFixed(1)}`;
 }
 
+// ハイドレーション済みかを effect + setState なしで判定する（カスケード再レンダを避ける）。
+// サーバースナップショットは false、クライアントスナップショットは true を返し、値は変化しない。
+const subscribeNever = () => () => {};
+const onClient = () => true;
+const onServer = () => false;
+
+/** SSR 時に描く空の枠。実物と同じ viewBox / class なので占有サイズが一致し、
+ *  クライアントで中身が入ってもレイアウトシフトは起きない。 */
+function ArtFrame() {
+  return (
+    <svg
+      className="skl-art"
+      viewBox="0 0 320 240"
+      preserveAspectRatio="xMidYMid slice"
+      aria-hidden="true"
+    />
+  );
+}
+
 export function SkillArt({ skill }: { skill: Skill }) {
+  // このアートは aria-hidden の純装飾で、技 id から決定的に再現できる。
+  // SSR HTML に含めると 80 技ぶんで約 320KB（/skills の 73%）になり、nonce CSP により
+  // 全ルートが CDN キャッシュ不可なため、その全量が毎リクエスト Vercel の
+  // Fast Origin Transfer として課金される。描画コードはハッシュ付きの immutable な
+  // クライアントチャンクに既に入っており CDN から配信されるので、
+  // ハイドレーション後にクライアントで描けば転送量を払わずに同じ絵が出る。
+  const hydrated = useSyncExternalStore(subscribeNever, onClient, onServer);
+
   const rng = mulberry32(hash(skill.id));
   const color = GENRE_COLOR[skill.genre];
   const abbr = GENRE_ABBR[skill.genre];
   const uid = `skart-${skill.id}`;
+
+  if (!hydrated) return <ArtFrame />;
 
   const cx = 132 + rng() * 56;
   const cy = 96 + rng() * 48;

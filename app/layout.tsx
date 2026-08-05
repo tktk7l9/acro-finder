@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter_Tight, JetBrains_Mono, Zen_Kaku_Gothic_New } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { SITE_URL } from "@/lib/site";
+import { SnsIconSprite } from "@/components/SnsIcons";
 import "./globals.css";
 
 const fontEn = Inter_Tight({
@@ -80,6 +81,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="ja" className={`${fontEn.variable} ${fontMono.variable} ${fontJp.variable}`}>
       <body>
+        <SnsIconSprite />
         {children}
         {process.env.VERCEL && <Analytics />}
       </body>
