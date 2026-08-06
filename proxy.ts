@@ -32,10 +32,17 @@ export function proxy(request: NextRequest) {
   return response;
 }
 
+// nonce が要るのは HTML を返すルートだけ。メタデータ系の静的ルート
+// (robots.txt / sitemap.xml / 各種アイコン・OG画像) まで middleware を通すと、
+// nonce を使わないのに関数実行だけ消費する。ボットは robots.txt と sitemap.xml を
+// 高頻度で叩くため、除外しないと Vercel の Function Invocation を無駄に食う。
+// HSTS 等のセキュリティヘッダーは next.config.js の headers() が全パスに付けるので、
+// ここから外しても失われるのは CSP のみ（これらのルートには不要）。
 export const config = {
   matcher: [
     {
-      source: "/((?!_next/static|_next/image|favicon.ico|icon.svg).*)",
+      source:
+        "/((?!_next/static|_next/image|favicon.ico|icon.svg|apple-icon|twitter-image|opengraph-image|manifest.webmanifest|robots.txt|sitemap.xml).*)",
       missing: [
         { type: "header", key: "next-router-prefetch" },
         { type: "header", key: "purpose", value: "prefetch" },
