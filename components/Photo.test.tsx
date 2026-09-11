@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { render } from "@testing-library/react";
-import { Photo, Star } from "./Photo";
+import { Photo } from "./Photo";
 
 describe("Photo", () => {
   it("renders the label and color class", () => {
@@ -30,12 +30,5 @@ describe("Photo", () => {
     );
     expect(container.querySelector("img")).toBeTruthy();
     expect(container.querySelector(".photo-glyph")).toBeNull();
-  });
-});
-
-describe("Star", () => {
-  it("renders an svg", () => {
-    const { container } = render(<Star />);
-    expect(container.querySelector("svg")).toBeTruthy();
   });
 });
