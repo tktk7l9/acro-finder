@@ -1,6 +1,14 @@
 "use client";
 
-import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
+import {
+  startTransition,
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  ViewTransition,
+} from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { EQUIPMENT_FILTERS, FACILITIES, TYPE_FILTERS } from "@/lib/data";
@@ -106,10 +114,29 @@ export default function Page() {
     window.history.replaceState(null, "", qs ? `?${qs}` : window.location.pathname);
   }, [query, activeId]);
 
+  // Filtering and sorting run inside a Transition so the <ViewTransition> around
+  // each card can animate cards entering, leaving and moving. Typing is already
+  // covered: `query` feeds `deferredQuery`, and a deferred value drives a
+  // Transition too. These setters are discrete clicks, so making them
+  // non-urgent costs nothing perceptible on a ~100 item local filter.
+  const selectType = (key: string) => {
+    startTransition(() => setTypeFilter(key));
+  };
+
+  const selectSort = (key: SortKey) => {
+    startTransition(() => setSort(key));
+  };
+
   const toggleEquip = (key: string) => {
-    setEquipFilters((prev) =>
-      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
+    startTransition(() =>
+      setEquipFilters((prev) =>
+        prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
+      ),
     );
+  };
+
+  const clearEquip = () => {
+    startTransition(() => setEquipFilters([]));
   };
 
   const requestGeolocation = () => {
@@ -233,19 +260,19 @@ export default function Page() {
               <div className="sort-toggle">
                 <button
                   className={sort === "distance" ? "active" : ""}
-                  onClick={() => setSort("distance")}
+                  onClick={() => selectSort("distance")}
                 >
                   距離
                 </button>
                 <button
                   className={sort === "rating" ? "active" : ""}
-                  onClick={() => setSort("rating")}
+                  onClick={() => selectSort("rating")}
                 >
                   評価
                 </button>
                 <button
                   className={sort === "price" ? "active" : ""}
-                  onClick={() => setSort("price")}
+                  onClick={() => selectSort("price")}
                 >
                   料金
                 </button>
@@ -256,7 +283,7 @@ export default function Page() {
                 <button
                   key={tf.key}
                   className={`chip ${typeFilter === tf.key ? "active" : ""}`}
-                  onClick={() => setTypeFilter(tf.key)}
+                  onClick={() => selectType(tf.key)}
                 >
                   {tf.label}
                 </button>
@@ -273,12 +300,18 @@ export default function Page() {
               </div>
             ) : (
               filtered.map((f) => (
-                <FacilityCard
-                  key={f.id}
-                  facility={f}
-                  active={activeId === f.id}
-                  onClick={() => setActiveId(f.id)}
-                />
+                // A stable `name` per facility is what lets React recognise the
+                // same card across a filter or sort change, so a card that only
+                // moved animates to its new position instead of cross-fading as
+                // if it were a different card. Names must be unique in the
+                // document at any one time — facility ids already are.
+                <ViewTransition key={f.id} name={`facility-${f.id}`}>
+                  <FacilityCard
+                    facility={f}
+                    active={activeId === f.id}
+                    onClick={() => setActiveId(f.id)}
+                  />
+                </ViewTransition>
               ))
             )}
           </div>
@@ -311,7 +344,7 @@ export default function Page() {
               {equipFilters.length > 0 && (
                 <button
                   className="eq-chip"
-                  onClick={() => setEquipFilters([])}
+                  onClick={clearEquip}
                   style={{ color: "var(--ink-3)" }}
                 >
                   ✕ 解除
