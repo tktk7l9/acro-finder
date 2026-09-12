@@ -13,10 +13,14 @@ describe("contentSecurityPolicy", () => {
     // 無視される。nonce もハッシュも無いこの構成で足すと信頼の起点が消え、
     // ページ上の全スクリプトが止まる。足すなら nonce かハッシュを同時に用意すること。
     expect(prod).not.toContain("strict-dynamic");
+    // dev 側も同じく禁止。dev だけ壊れる混入を見逃さない。
+    expect(contentSecurityPolicy({ dev: true })).not.toContain("strict-dynamic");
   });
 
   it("インラインを許すことを script-src に明示している", () => {
-    expect(prod).toContain("script-src 'self' 'unsafe-inline'");
+    // 末尾の ; まで含めて固定する。含めないと "'unsafe-inline' https: *" のように
+    // 後ろに緩い値が足されても通ってしまう。
+    expect(prod).toContain("script-src 'self' 'unsafe-inline';");
   });
 
   it("本番では 'unsafe-eval' を出さない", () => {
