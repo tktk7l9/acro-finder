@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { prefectureBySlug, facilitiesInPrefecture, prefectureSummary } from "@/lib/areas";
 import { breadcrumbJsonLd, itemListJsonLd } from "@/lib/jsonld";
@@ -57,7 +56,6 @@ export default async function AreaPage({ params }: Props) {
   if (list.length === 0) notFound();
   const s = prefectureSummary(pref.name);
   const breakdown = typeBreakdownText(s.byType);
-  const nonce = (await headers()).get("x-nonce") ?? undefined;
 
   const crumbs: Crumb[] = [
     { name: "ホーム", href: "/" },
@@ -88,7 +86,6 @@ export default async function AreaPage({ params }: Props) {
       </main>
 
       <JsonLd
-        nonce={nonce}
         data={[
           breadcrumbJsonLd(crumbs.map((c) => ({ name: c.name, url: `${SITE_URL}${c.href}` }))),
           itemListJsonLd(list.map((f) => ({ name: f.name, url: `${SITE_URL}/facilities/${f.id}` }))),

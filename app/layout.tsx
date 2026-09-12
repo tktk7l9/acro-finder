@@ -67,9 +67,6 @@ export const metadata: Metadata = {
   },
 };
 
-// Per-request rendering so the CSP nonce (set in middleware) is applied.
-export const dynamic = "force-dynamic";
-
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
