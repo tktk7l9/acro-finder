@@ -4,8 +4,9 @@ import type { Facility } from "@/lib/types";
 // Compact, crawlable link card used on the index and area pages.
 //
 // prefetch を切っているのは、この 1 コンポーネントが /facilities に 99 個並ぶため。
-// 既定ではビューポートに入った時点で全件のRSCを先読みするが、リンク先は force-dynamic で
-// CDN キャッシュに乗らないため、その全てが Vercel の Fast Origin Transfer として課金される
+// 既定ではビューポートに入った時点で全件のRSCを先読みするが、リンク先の
+// facilities/[id] は generateStaticParams が無く動的のままで CDN キャッシュに乗らないため、
+// その全てがそのまま転送量になる（nonce CSP をやめても、この 1 ルートは状況が変わっていない）
 // （実測: 軽くスクロールしただけで 21 リクエスト / 約 25KB）。
 // 利用者が実際に開くのは 99 件のうち数件なので、先読みの価値より転送コストが上回る。
 export function FacilityLink({ facility }: { facility: Facility }) {

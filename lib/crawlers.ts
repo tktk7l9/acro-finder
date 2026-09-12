@@ -1,8 +1,9 @@
 /** 学習データ収集・AI要約目的のクローラー。
  *
- *  全ルートが nonce CSP のため force-dynamic であり、CDN キャッシュに一切乗らない
- *  （`Cache-Control: private, no-store`）。つまり 1 リクエスト = ページ全体のバイト数が
- *  そのまま Vercel の Fast Origin Transfer として課金される。sitemap に 127 URL あるため、
+ *  2026-09-12 に nonce CSP をやめ、大半のルートは CDN キャッシュに乗るようになった。
+ *  ただし area/[pref] と facilities/[id] は generateStaticParams が無く動的のままで、
+ *  そこへの巡回は今も 1 リクエスト = ページ全体のバイト数がそのまま転送量になる。
+ *  sitemap に 127 URL あるため、
  *  巡回の激しい AI クローラーを素通しにすると無料枠 10GB を短期間で使い切る。
  *
  *  検索流入は事業上の生命線なので Googlebot / Bingbot は通す。
