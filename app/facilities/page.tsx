@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { headers } from "next/headers";
 import { FACILITIES } from "@/lib/data";
 import { facilitiesByPrefecture } from "@/lib/areas";
 import { breadcrumbJsonLd, itemListJsonLd } from "@/lib/jsonld";
@@ -19,7 +18,6 @@ export const metadata: Metadata = {
 
 export default async function FacilitiesIndexPage() {
   const groups = facilitiesByPrefecture();
-  const nonce = (await headers()).get("x-nonce") ?? undefined;
   const crumbs: Crumb[] = [
     { name: "ホーム", href: "/" },
     { name: "施設一覧", href: "/facilities" },
@@ -46,7 +44,9 @@ export default async function FacilitiesIndexPage() {
                 <span className="count">（{g.facilities.length}）</span>
               </h2>
               {/* 都道府県ぶん並ぶうえ、リンク先の area ページは 1 件あたり約 57KB。
-                  force-dynamic でキャッシュが効かないため先読みは切る。 */}
+                  リンク先の area/[pref] は generateStaticParams が無く動的のままで
+                  CDN キャッシュに乗らないため、47 件をまとめて先読みする転送量は
+                  依然として割に合わない。nonce CSP を外しても切ったまま。 */}
               <Link href={`/area/${g.slug}`} prefetch={false}>
                 このエリアを見る →
               </Link>
@@ -71,7 +71,6 @@ export default async function FacilitiesIndexPage() {
       </main>
 
       <JsonLd
-        nonce={nonce}
         data={[
           breadcrumbJsonLd(crumbs.map((c) => ({ name: c.name, url: `${SITE_URL}${c.href}` }))),
           itemListJsonLd(

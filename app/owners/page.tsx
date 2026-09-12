@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { headers } from "next/headers";
 import { FACILITIES } from "@/lib/data";
 import { facilitiesByPrefecture } from "@/lib/areas";
 import { breadcrumbJsonLd } from "@/lib/jsonld";
@@ -56,7 +55,6 @@ const VALUES = [
 ];
 
 export default async function OwnersPage() {
-  const nonce = (await headers()).get("x-nonce") ?? undefined;
   const prefCount = facilitiesByPrefecture().length;
   const crumbs: Crumb[] = [
     { name: "ホーム", href: "/" },
@@ -114,7 +112,6 @@ export default async function OwnersPage() {
       </main>
 
       <JsonLd
-        nonce={nonce}
         data={breadcrumbJsonLd(crumbs.map((c) => ({ name: c.name, url: `${SITE_URL}${c.href}` })))}
       />
     </div>

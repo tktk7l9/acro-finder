@@ -74,11 +74,12 @@ function ArtFrame() {
 
 export function SkillArt({ skill }: { skill: Skill }) {
   // このアートは aria-hidden の純装飾で、技 id から決定的に再現できる。
-  // SSR HTML に含めると 80 技ぶんで約 320KB（/skills の 73%）になり、nonce CSP により
-  // 全ルートが CDN キャッシュ不可なため、その全量が毎リクエスト Vercel の
-  // Fast Origin Transfer として課金される。描画コードはハッシュ付きの immutable な
+  // SSR HTML に含めると 80 技ぶんで約 320KB（/skills の 73%）になる。nonce CSP 時代は
+  // 全ルートが CDN キャッシュ不可でその全量が毎リクエスト課金されていた。2026-09-12 に
+  // 静的 CSP へ移して /skills は静的化したが、320KB を配る無駄は残る。
+  // 描画コードはハッシュ付きの immutable な
   // クライアントチャンクに既に入っており CDN から配信されるので、
-  // ハイドレーション後にクライアントで描けば転送量を払わずに同じ絵が出る。
+  // ハイドレーション後にクライアントで描けば同じ絵が出る。
   const hydrated = useSyncExternalStore(subscribeNever, onClient, onServer);
 
   const rng = mulberry32(hash(skill.id));

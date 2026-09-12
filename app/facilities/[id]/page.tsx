@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { FACILITIES } from "@/lib/data";
 import { prefectureOf, slugForPrefecture, sameAreaFacilities } from "@/lib/areas";
@@ -50,7 +49,6 @@ export default async function FacilityPage({ params }: Props) {
   const slug = pref ? slugForPrefecture(pref.name) : undefined;
   const nearby = sameAreaFacilities(facility, 6);
   const canonical = `${SITE_URL}/facilities/${facility.id}`;
-  const nonce = (await headers()).get("x-nonce") ?? undefined;
   const { links } = facility;
 
   const crumbs: Crumb[] = [
@@ -288,7 +286,6 @@ export default async function FacilityPage({ params }: Props) {
       </main>
 
       <JsonLd
-        nonce={nonce}
         data={[
           facilityJsonLd({ facility, prefectureName: pref?.name, canonicalUrl: canonical }),
           breadcrumbJsonLd(crumbs.map((c) => ({ name: c.name, url: `${SITE_URL}${c.href}` }))),
