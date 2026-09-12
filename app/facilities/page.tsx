@@ -44,8 +44,9 @@ export default async function FacilitiesIndexPage() {
                 <span className="count">（{g.facilities.length}）</span>
               </h2>
               {/* 都道府県ぶん並ぶうえ、リンク先の area ページは 1 件あたり約 57KB。
-                  nonce CSP を外して CDN キャッシュは効くようになったが、47 件を
-                  まとめて先読みする転送量は依然として割に合わないので切ったまま。 */}
+                  リンク先の area/[pref] は generateStaticParams が無く動的のままで
+                  CDN キャッシュに乗らないため、47 件をまとめて先読みする転送量は
+                  依然として割に合わない。nonce CSP を外しても切ったまま。 */}
               <Link href={`/area/${g.slug}`} prefetch={false}>
                 このエリアを見る →
               </Link>
