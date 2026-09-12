@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0 # gitleaks-action がコミット差分をスキャンするのに必要
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: gitleaks scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: npm audit
+        run: npm audit --audit-level=low
+      - run: npm run typecheck
+      # Next 16 の next build は lint を実行しない。このステップが無いと
+      # lint がどこでも走らないので、ここで回す（ai-primer / service-anatomy には
+      # まだ無い。あちらにも同じ穴がある）。
+      - run: npm run lint
+      # lib/csp.test.ts が 'strict-dynamic' の再混入を止める唯一の装置。
+      # CSP Level 3 では 'strict-dynamic' があると 'self' も 'unsafe-inline' も
+      # 無視され、nonce もハッシュも無い本構成ではページ上の全スクリプトが停止する。
+      # 症状が出るのは本番デプロイ後なので、ここで止める。
+      - run: npm test
+      - run: npm run build
