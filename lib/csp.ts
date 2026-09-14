@@ -8,14 +8,19 @@
 // インラインだから。ld+json はデータブロックで実行されないため script-src の対象外。
 // img-src の blob: / https: は地図タイルと施設写真、worker-src の blob: は地図
 // ライブラリが起こす Worker のため。
+//
+// Cloudflare Web Analytics のビーコンで2箇所広げている。スクリプト本体は
+// static.cloudflareinsights.com から読み込まれ、計測データは
+// cloudflareinsights.com へ POST される。**片方でも欠けるとページは正常に
+// 見えたままビーコンだけ黙ってブロックされる**ので、csp.test.ts で両方を固定した。
 export function contentSecurityPolicy({ dev = false }: { dev?: boolean } = {}): string {
   return [
     "default-src 'self'",
-    `script-src 'self' 'unsafe-inline'${dev ? " 'unsafe-eval'" : ""}`,
+    `script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com${dev ? " 'unsafe-eval'" : ""}`,
     "style-src 'self' 'unsafe-inline'",
     "font-src 'self'",
     "img-src 'self' data: blob: https:",
-    "connect-src 'self'",
+    "connect-src 'self' https://cloudflareinsights.com",
     "worker-src 'self' blob:",
     "manifest-src 'self'",
     "frame-ancestors 'none'",
