@@ -17,8 +17,12 @@ next-env.d.ts
 *.log
 
 # local env files
-.env*.local
+# keyway pull -e <env> は .env.development / .env.production という名前で書き出す。
+# .env*.local と .env だけだとそれらが素通りして、public リポジトリに Resend の
+# API キーが載る。.env.* をまとめて無視し、example だけ通す。
 .env
+.env.*
+!.env*.example
 
 # vercel
 .vercel
