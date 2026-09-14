@@ -25,3 +25,7 @@ next-env.d.ts
 
 # coverage
 /coverage
+
+# @opennextjs/cloudflare のビルド生成物 / wrangler のローカル状態
+.open-next/
+.wrangler/
