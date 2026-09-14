@@ -1,0 +1,24 @@
+/**
+ * acro-finder — Cloudflare Workers 設定
+ * https://developers.cloudflare.com/workers/framework-guides/web-apps/nextjs/
+ *
+ * Next.js を @opennextjs/cloudflare でビルドして Workers で動かす。
+ * 2026-08-11 から Vercel の Hobby アカウントが停止しているため移行した。
+ */
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "acro-finder",
+  "main": ".open-next/worker.js",
+  // この日付はUTCで検証される。JST基準の「今日」を入れるとUTCがまだ前日で
+  // 「in the future」エラーになることがある（ai-primer で実際に踏んだ）。
+  "compatibility_date": "2026-09-14",
+  // Next.js の実行に必須。日付は 2024-09-23 以降であること。
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS",
+  },
+  "observability": {
+    "enabled": true,
+  },
+}

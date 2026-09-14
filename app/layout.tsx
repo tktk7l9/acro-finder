@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import { Inter_Tight, JetBrains_Mono, Zen_Kaku_Gothic_New } from "next/font/google";
-import { Analytics } from "@vercel/analytics/next";
 import { SITE_URL } from "@/lib/site";
 import { SnsIconSprite } from "@/components/SnsIcons";
 import "./globals.css";
@@ -80,7 +79,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <SnsIconSprite />
         {children}
-        {process.env.VERCEL && <Analytics />}
+        {/* アナリティクスは Cloudflare Web Analytics に差し替える。ダッシュボードで
+            サイトを登録してトークンを取る必要があるので、まず Analytics 無しで
+            デプロイして動作を確認し、トークン取得後に別コミットでビーコンを足す。
+            中途半端なスニペットを入れて CSP 違反を起こすより確実。
+            移行前は VERCEL 環境変数でゲートした Vercel Analytics を置いていたが、
+            Workers ではその変数が存在しないので、そのままだと静かに消えるだけだった。 */}
       </body>
     </html>
   );

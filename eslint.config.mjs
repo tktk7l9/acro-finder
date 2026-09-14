@@ -3,7 +3,17 @@
 import next from "eslint-config-next/core-web-vitals";
 
 const config = [
-  { ignores: [".next/**", "coverage/**", "node_modules/**", "next-env.d.ts"] },
+  {
+    ignores: [
+      ".next/**",
+      "coverage/**",
+      "node_modules/**",
+      "next-env.d.ts",
+      // OpenNext / wrangler の生成物。lint 対象に入れると数百件のエラーになる。
+      ".open-next/**",
+      ".wrangler/**",
+    ],
+  },
   ...next,
   {
     rules: {
