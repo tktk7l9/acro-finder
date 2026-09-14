@@ -79,12 +79,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <SnsIconSprite />
         {children}
-        {/* アナリティクスは Cloudflare Web Analytics に差し替える。ダッシュボードで
-            サイトを登録してトークンを取る必要があるので、まず Analytics 無しで
-            デプロイして動作を確認し、トークン取得後に別コミットでビーコンを足す。
-            中途半端なスニペットを入れて CSP 違反を起こすより確実。
-            移行前は VERCEL 環境変数でゲートした Vercel Analytics を置いていたが、
-            Workers ではその変数が存在しないので、そのままだと静かに消えるだけだった。 */}
+        {/* Cloudflare Web Analytics。2026-09-14 の Workers 移行で Vercel Analytics を
+            外した代わり。token は HTML に埋まって全訪問者に見えるため秘密情報ではない。
+            許可オリジンは lib/csp.ts 側にあり、csp.test.ts が両方を固定している。
+            gitleaks は 32桁hex を generic-api-key として検出するので、検出行に
+            gitleaks:allow を置いて抑止する（設定ファイルを置くと他の本物の秘密まで隠れる）。 */}
+        {/* eslint-disable-next-line @next/next/no-sync-scripts --
+            type="module" のスクリプトは仕様上 defer されるため、パーサーを止めない */}
+        <script
+          type="module"
+          src="https://static.cloudflareinsights.com/beacon.min.js"
+          data-cf-beacon={'{"token": "4bc6c9283c434c8eb00a63fda94b12f1"}' /* gitleaks:allow */}
+        />
       </body>
     </html>
   );

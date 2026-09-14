@@ -20,7 +20,9 @@ describe("contentSecurityPolicy", () => {
   it("インラインを許すことを script-src に明示している", () => {
     // 末尾の ; まで含めて固定する。含めないと "'unsafe-inline' https: *" のように
     // 後ろに緩い値が足されても通ってしまう。
-    expect(prod).toContain("script-src 'self' 'unsafe-inline';");
+    expect(prod).toContain(
+      "script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com;",
+    );
   });
 
   it("本番では 'unsafe-eval' を出さない", () => {
@@ -44,7 +46,7 @@ describe("contentSecurityPolicy", () => {
       "default-src 'self'",
       "style-src 'self' 'unsafe-inline'",
       "font-src 'self'",
-      "connect-src 'self'",
+      "connect-src 'self' https://cloudflareinsights.com;",
       "manifest-src 'self'",
       "frame-ancestors 'none'",
       "base-uri 'self'",
@@ -54,6 +56,15 @@ describe("contentSecurityPolicy", () => {
     ]) {
       expect(prod).toContain(directive);
     }
+  });
+
+  it("Cloudflare Web Analytics のビーコンに必要な2オリジンを許可している", () => {
+    // ビーコンは static.cloudflareinsights.com から読み込まれ、計測データを
+    // cloudflareinsights.com へ POST する。**片方でも欠けるとページは正常に
+    // 見えたままビーコンだけ黙ってブロックされる**（コンソールに CSP 違反が
+    // 出るだけ）ので、両方をここで固定する。
+    expect(prod).toContain("https://static.cloudflareinsights.com");
+    expect(prod).toContain("connect-src 'self' https://cloudflareinsights.com;");
   });
 
   it("ディレクティブは ; 区切りで、末尾に余分な ; を付けない", () => {
