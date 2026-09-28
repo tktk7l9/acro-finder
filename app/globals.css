@@ -261,6 +261,11 @@ button {
   justify-content: space-between;
   margin-bottom: 12px;
 }
+.list-distance-note {
+  margin: -4px 0 10px;
+  font-size: 11px;
+  color: var(--ink-3);
+}
 .list-count {
   font-family: var(--font-en);
   font-size: 11px;
@@ -1025,6 +1030,8 @@ button {
   color: var(--ink-3);
   font-size: 13px;
 }
+.empty p { margin: 0 0 10px; line-height: 1.7; }
+.empty .btn { margin-top: 8px; }
 
 /* === Links list (detail panel) === */
 .links-list {

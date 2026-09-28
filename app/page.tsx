@@ -33,17 +33,24 @@ const DEFAULT_POS = { lat: 35.681, lng: 139.767 };
 
 type GeoState = "idle" | "locating" | "active" | "error";
 
+const SORT_OPTIONS: { key: SortKey; label: string }[] = [
+  { key: "distance", label: "距離" },
+  { key: "price", label: "料金" },
+];
+
 export default function Page() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [equipFilters, setEquipFilters] = useState<string[]>([]);
   const [sort, setSort] = useState<SortKey>("distance");
-  const [showUser, setShowUser] = useState(true);
   const [userPos, setUserPos] = useState(DEFAULT_POS);
   const [geoState, setGeoState] = useState<GeoState>("idle");
   const [geoMessage, setGeoMessage] = useState("");
   const [focusPref, setFocusPref] = useState<Prefecture | null>(null);
+  // The user pin is only drawn for a real fix — before that the base point is
+  // Tokyo Station, and a pin labelled 現在地 there would be a false statement.
+  const located = geoState === "active";
 
   // Keep the search box responsive: typing updates `query` immediately, while
   // the expensive filter + marker diff run against the deferred value.
@@ -77,7 +84,6 @@ export default function Page() {
       return true;
     });
     if (sort === "distance") list.sort((a, b) => a.distance - b.distance);
-    if (sort === "rating") list.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
     if (sort === "price") list.sort((a, b) => priceValue(a.price) - priceValue(b.price));
     return list;
   }, [facilities, deferredQuery, typeFilter, equipFilters, sort]);
@@ -139,6 +145,24 @@ export default function Page() {
     startTransition(() => setEquipFilters([]));
   };
 
+  const clearAll = () => {
+    setQuery("");
+    startTransition(() => {
+      setTypeFilter("all");
+      setEquipFilters([]);
+    });
+  };
+
+  // Esc closes the detail panel, which covers the whole screen on phones.
+  useEffect(() => {
+    if (!activeId) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setActiveId(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [activeId]);
+
   const requestGeolocation = () => {
     if (geoState === "locating") return;
     if (typeof navigator === "undefined" || !navigator.geolocation) {
@@ -152,7 +176,6 @@ export default function Page() {
       (pos) => {
         setUserPos({ lat: pos.coords.latitude, lng: pos.coords.longitude });
         setGeoState("active");
-        setShowUser(true);
         setSort("distance");
       },
       (err) => {
@@ -174,7 +197,7 @@ export default function Page() {
       ? "var(--warn)"
       : geoState === "error"
         ? "var(--danger)"
-        : showUser
+        : located
           ? "oklch(0.7 0.2 240)"
           : "var(--ink-4)";
   const dotGlow =
@@ -182,7 +205,7 @@ export default function Page() {
       ? "0 0 6px var(--warn)"
       : geoState === "error"
         ? "0 0 6px var(--danger)"
-        : showUser
+        : located
           ? "0 0 6px oklch(0.7 0.2 240)"
           : "none";
 
@@ -214,7 +237,8 @@ export default function Page() {
         <div className="search">
           <span className="search-icon">⌕</span>
           <input
-            type="text"
+            type="search"
+            aria-label="施設を検索"
             placeholder="施設名・エリア・器具で検索  (例: トランポリン、渋谷)"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -260,32 +284,30 @@ export default function Page() {
               <div className="list-count">
                 <strong>{filtered.length}</strong>件の施設
               </div>
-              <div className="sort-toggle">
-                <button
-                  className={sort === "distance" ? "active" : ""}
-                  onClick={() => selectSort("distance")}
-                >
-                  距離
-                </button>
-                <button
-                  className={sort === "rating" ? "active" : ""}
-                  onClick={() => selectSort("rating")}
-                >
-                  評価
-                </button>
-                <button
-                  className={sort === "price" ? "active" : ""}
-                  onClick={() => selectSort("price")}
-                >
-                  料金
-                </button>
+              <div className="sort-toggle" role="group" aria-label="並び順">
+                {SORT_OPTIONS.map((o) => (
+                  <button
+                    key={o.key}
+                    className={sort === o.key ? "active" : ""}
+                    aria-pressed={sort === o.key}
+                    onClick={() => selectSort(o.key)}
+                  >
+                    {o.label}
+                  </button>
+                ))}
               </div>
             </div>
+            <p className="list-distance-note">
+              {located
+                ? "距離は現在地からの直線距離です"
+                : "距離は東京駅からの直線距離です（「現在地から探す」で切り替え）"}
+            </p>
             <div className="type-filters">
               {TYPE_FILTERS.map((tf) => (
                 <button
                   key={tf.key}
                   className={`chip ${typeFilter === tf.key ? "active" : ""}`}
+                  aria-pressed={typeFilter === tf.key}
                   onClick={() => selectType(tf.key)}
                 >
                   {tf.label}
@@ -296,10 +318,11 @@ export default function Page() {
           <div className="list-scroll">
             {filtered.length === 0 ? (
               <div className="empty">
-                条件に合う施設が見つかりませんでした
-                <br />
-                <br />
-                フィルターを調整してください
+                <p>条件に合う施設が見つかりませんでした。</p>
+                <p>キーワードを短くするか、種別・器具の絞り込みを外すと見つかることがあります。</p>
+                <button className="btn" onClick={clearAll}>
+                  条件をすべて解除
+                </button>
               </div>
             ) : (
               filtered.map((f) => (
@@ -326,8 +349,7 @@ export default function Page() {
             activeId={activeId}
             onSelect={setActiveId}
             userPos={userPos}
-            showUser={showUser}
-            onRecenter={() => setShowUser(true)}
+            showUser={located}
             focusPref={focusPref}
           />
 
@@ -338,9 +360,12 @@ export default function Page() {
                 <button
                   key={eq.key}
                   className={`eq-chip ${equipFilters.includes(eq.key) ? "active" : ""}`}
+                  aria-pressed={equipFilters.includes(eq.key)}
                   onClick={() => toggleEquip(eq.key)}
                 >
-                  <span className="icon">{eq.icon}</span>
+                  <span className="icon" aria-hidden>
+                    {eq.icon}
+                  </span>
                   {eq.key}
                 </button>
               ))}
@@ -359,7 +384,7 @@ export default function Page() {
           <div className="map-legend">
             <span className="swatch">施設</span>
             <span className="swatch active">選択中</span>
-            <span className="swatch you">現在地</span>
+            {located && <span className="swatch you">現在地</span>}
             <span style={{ color: "var(--ink-4)", fontFamily: "var(--font-mono)", fontSize: 10 }}>
               ·
             </span>

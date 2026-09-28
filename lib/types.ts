@@ -85,4 +85,6 @@ export interface TypeFilter {
   label: string;
 }
 
-export type SortKey = "distance" | "rating" | "price";
+// No facility carries a rating yet, so a rating sort would be a no-op button
+// (SHIG 37). Add "rating" back once ratings exist in the data.
+export type SortKey = "distance" | "price";
