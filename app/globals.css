@@ -41,6 +41,12 @@ html, body {
   overflow: hidden;
 }
 
+/* One visible keyboard-focus ring for every control (cards are role=button). */
+:where(a, button, select, [role="button"], [tabindex]):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 button {
   font: inherit;
   color: inherit;
@@ -1811,6 +1817,12 @@ button {
 }
 
 /* ── Genre tab bar ── */
+.skl-combo-undo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
 .skl-genrebar {
   display: flex;
   align-items: stretch;

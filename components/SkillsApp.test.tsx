@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { render, fireEvent } from "@testing-library/react";
 import { SkillsApp } from "./SkillsApp";
 import { SKILLS } from "@/lib/skills-data";
@@ -46,5 +46,53 @@ describe("SkillsApp", () => {
     fireEvent.click(container.querySelector(".skl-card") as HTMLElement);
     fireEvent.click(container.querySelector(".skl-sp-addcombo") as HTMLElement);
     expect(container.querySelectorAll(".skl-combo-slot")).toHaveLength(1);
+  });
+
+  describe("SHIG review", () => {
+    afterEach(() => vi.unstubAllGlobals());
+
+    // SHIG 94: keyboard users can open a skill.
+    it("opens a skill from the keyboard", () => {
+      const { container } = render(<SkillsApp />);
+      const card = container.querySelector(".skl-card") as HTMLElement;
+      expect(card.getAttribute("role")).toBe("button");
+      expect(card.tabIndex).toBe(0);
+      fireEvent.keyDown(card, { key: "Enter" });
+      expect(container.querySelector(".skl-panel.open")).toBeTruthy();
+    });
+
+    it("does not open the card when Enter is pressed on its star button", () => {
+      const { container } = render(<SkillsApp />);
+      fireEvent.keyDown(container.querySelector(".skl-card .skl-card-iconbtn") as HTMLElement, {
+        key: "Enter",
+      });
+      expect(container.querySelector(".skl-panel.open")).toBeNull();
+    });
+
+    // SHIG 54/57: clearing acts at once and can be undone.
+    it("clears the combo with an undo notice", () => {
+      const { container, getByText, queryByText } = render(<SkillsApp />);
+      fireEvent.click(container.querySelector(".skl-card") as HTMLElement);
+      fireEvent.click(container.querySelector(".skl-sp-addcombo") as HTMLElement);
+      fireEvent.click(getByText("クリア"));
+      expect(container.querySelectorAll(".skl-combo-slot")).toHaveLength(0);
+      fireEvent.click(getByText("元に戻す"));
+      expect(container.querySelectorAll(".skl-combo-slot")).toHaveLength(1);
+      expect(queryByText("元に戻す")).toBeNull();
+      expect(JSON.parse(localStorage.getItem("acro_skill_combo")!)).toHaveLength(1);
+    });
+
+    // SHIG 82: on a phone the builder starts folded so the list is visible.
+    it("starts the combo builder folded on narrow screens", () => {
+      vi.stubGlobal("matchMedia", (q: string) => ({ matches: q.includes("max-width"), media: q }));
+      const { getByText } = render(<SkillsApp />);
+      expect(getByText("▲ 展開")).toBeTruthy();
+    });
+
+    it("keeps the combo builder open on wide screens", () => {
+      vi.stubGlobal("matchMedia", (q: string) => ({ matches: false, media: q }));
+      const { getByText } = render(<SkillsApp />);
+      expect(getByText("▼ 折りたたみ")).toBeTruthy();
+    });
   });
 });
