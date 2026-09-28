@@ -27,6 +27,7 @@ function FacilityCardImpl({ facility, active, favorite = false, onClick }: Props
       role="button"
       tabIndex={0}
       aria-current={active || undefined}
+      data-facility-id={facility.id}
     >
       <div className="card-row">
         <div className="card-thumb">

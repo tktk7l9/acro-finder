@@ -276,6 +276,9 @@ button {
 }
 .tel-link {
   display: block;
+  /* A tap target of at least 7mm (SHIG 78) without shifting the text. */
+  padding: 5px 0;
+  margin: -5px 0;
   color: inherit;
   text-decoration: underline dotted;
   text-underline-offset: 3px;

@@ -34,6 +34,22 @@ const DEFAULT_POS = { lat: 35.681, lng: 139.767 };
 
 type GeoState = "idle" | "locating" | "active" | "error";
 
+function isTextEntry(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  return target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName);
+}
+
+function focusIsInDetail(): boolean {
+  return !!document.activeElement?.closest(".detail");
+}
+
+// The panel unmounts on close; focus the card once React has committed that.
+function focusCardAfterRender(id: string) {
+  setTimeout(() => {
+    document.querySelector<HTMLElement>(`.card[data-facility-id="${id}"]`)?.focus();
+  }, 0);
+}
+
 const SORT_OPTIONS: { key: SortKey; label: string }[] = [
   { key: "distance", label: "距離" },
   { key: "price", label: "料金" },
@@ -169,11 +185,24 @@ export default function Page() {
     });
   };
 
-  // Esc closes the detail panel, which covers the whole screen on phones.
+  // Close the detail panel. When focus was inside it (keyboard users), hand it
+  // back to the facility's card instead of dropping it on <body> (SHIG 94).
+  const closeDetail = (id: string | null) => {
+    const refocus = focusIsInDetail();
+    setActiveId(null);
+    if (refocus && id) focusCardAfterRender(id);
+  };
+
+  // Esc closes the detail panel, which covers the whole screen on phones. In a
+  // text field Esc belongs to the field (a search box clears itself), so the
+  // panel stays open there.
   useEffect(() => {
     if (!activeId) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setActiveId(null);
+      if (e.key !== "Escape" || isTextEntry(e.target)) return;
+      const refocus = focusIsInDetail();
+      setActiveId(null);
+      if (refocus) focusCardAfterRender(activeId);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -406,7 +435,7 @@ export default function Page() {
 
           <DetailPanel
             facility={activeFacility}
-            onClose={() => setActiveId(null)}
+            onClose={() => closeDetail(activeId)}
             favorite={!!activeId && favorites.includes(activeId)}
             onToggleFavorite={() => activeId && toggleFav(activeId)}
             located={located}

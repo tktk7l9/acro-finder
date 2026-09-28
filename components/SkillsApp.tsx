@@ -730,6 +730,13 @@ function ComboDock({
   onUndoClear?: () => void;
 }) {
   const totalLv = combo.reduce((sum, id) => sum + (byId[id]?.lv || 0), 0);
+  // "クリア" disables itself once the combo is empty, which would drop keyboard
+  // focus on <body>; move it to the undo button that replaces the slots.
+  const undoRef = useRef<HTMLButtonElement>(null);
+  const canUndo = !!onUndoClear;
+  useEffect(() => {
+    if (canUndo) undoRef.current?.focus();
+  }, [canUndo]);
 
   return (
     <div className={`skl-combo${collapsed ? " collapsed" : ""}`}>
@@ -751,7 +758,7 @@ function ComboDock({
             {combo.length === 0 && onUndoClear ? (
               <div className="skl-combo-empty skl-combo-undo" role="status">
                 コンボをクリアしました
-                <button className="btn" onClick={onUndoClear}>
+                <button className="btn" onClick={onUndoClear} ref={undoRef}>
                   元に戻す
                 </button>
               </div>

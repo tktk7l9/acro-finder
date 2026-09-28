@@ -76,6 +76,8 @@ describe("SkillsApp", () => {
       fireEvent.click(container.querySelector(".skl-sp-addcombo") as HTMLElement);
       fireEvent.click(getByText("クリア"));
       expect(container.querySelectorAll(".skl-combo-slot")).toHaveLength(0);
+      // The disabled クリア button would strand keyboard focus; undo takes it.
+      expect(document.activeElement?.textContent).toBe("元に戻す");
       fireEvent.click(getByText("元に戻す"));
       expect(container.querySelectorAll(".skl-combo-slot")).toHaveLength(1);
       expect(queryByText("元に戻す")).toBeNull();

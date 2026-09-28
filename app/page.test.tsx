@@ -175,6 +175,29 @@ describe("home page", () => {
       expect(container.querySelector(".detail")).toBeNull();
     });
 
+    // Esc in the search box clears the box (native), not the open panel.
+    it("keeps the panel open when Escape is pressed in the search box", () => {
+      window.history.replaceState(null, "", "/?f=f01");
+      const { container } = render(<Page />);
+      const input = container.querySelector(".search input") as HTMLInputElement;
+      fireEvent.keyDown(input, { key: "Escape" });
+      expect(container.querySelector(".detail")).not.toBeNull();
+    });
+
+    // SHIG 94: closing from inside the panel returns focus to its card.
+    it.each([
+      ["the close button", (c: HTMLElement) => fireEvent.click(c.querySelector(".detail-close")!)],
+      ["Escape", () => fireEvent.keyDown(window, { key: "Escape" })],
+    ])("returns focus to the facility card when closed with %s", async (_, close) => {
+      window.history.replaceState(null, "", "/?f=f01");
+      const { container } = render(<Page />);
+      (container.querySelector(".detail-close") as HTMLElement).focus();
+      close(container);
+      expect(container.querySelector(".detail")).toBeNull();
+      await new Promise((r) => setTimeout(r, 0));
+      expect(document.activeElement?.getAttribute("data-facility-id")).toBe("f01");
+    });
+
     // SHIG 94/96: toggle state is exposed, not only colour.
     it("exposes chip and sort state with aria-pressed", () => {
       const { container } = render(<Page />);
