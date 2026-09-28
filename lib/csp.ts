@@ -1,18 +1,18 @@
-// Content-Security-Policy の正本。next.config.ts の headers() がこれを配る。
+// Source of truth for the Content-Security-Policy. next.config.ts headers() serves it.
 //
-// 以前は proxy.ts が per-request で nonce 付きの CSP を発行していたが、Next 16 の
-// proxy は Node ランタイム専用で、OpenNext (Cloudflare Workers) は Node middleware に
-// 対応していないため移行できなかった。nonce をやめて静的ヘッダーに移した。
+// proxy.ts used to issue a per-request CSP with a nonce, but in Next 16 the proxy
+// runs only on the Node runtime and OpenNext (Cloudflare Workers) does not support
+// Node middleware, so it could not be migrated. We dropped the nonce and moved to a static header.
 //
-// script-src に 'unsafe-inline' が要るのは Next の bootstrap（self.__next_f.push）が
-// インラインだから。ld+json はデータブロックで実行されないため script-src の対象外。
-// img-src の blob: / https: は地図タイルと施設写真、worker-src の blob: は地図
-// ライブラリが起こす Worker のため。
+// script-src needs 'unsafe-inline' because Next's bootstrap (self.__next_f.push) is
+// inline. ld+json is a data block and is not executed, so script-src does not apply to it.
+// img-src blob: / https: are for map tiles and facility photos; worker-src blob: is for the
+// Worker the map library spawns.
 //
-// Cloudflare Web Analytics のビーコンで2箇所広げている。スクリプト本体は
-// static.cloudflareinsights.com から読み込まれ、計測データは
-// cloudflareinsights.com へ POST される。**片方でも欠けるとページは正常に
-// 見えたままビーコンだけ黙ってブロックされる**ので、csp.test.ts で両方を固定した。
+// Two places are widened for the Cloudflare Web Analytics beacon. The script itself is
+// loaded from static.cloudflareinsights.com, and the data is POSTed to
+// cloudflareinsights.com. **If either is missing, the page still looks fine
+// while only the beacon is silently blocked**, so csp.test.ts pins both.
 export function contentSecurityPolicy({ dev = false }: { dev?: boolean } = {}): string {
   return [
     "default-src 'self'",

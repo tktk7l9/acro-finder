@@ -54,11 +54,11 @@ export interface Facility {
   links: FacilityLinks;
   /** Hotlinked og:image from the facility's official site, when available. */
   image?: string;
-  /** 施設のオープン日（実在が確認できた施設のみ）。 */
+  /** Facility opening date (only when it could be verified). */
   openedAt?: string;
-  /** このアプリへの登録日。 */
+  /** Date the facility was added to this app. */
   registeredAt: string;
-  /** 施設情報の最終更新日。 */
+  /** Date the facility information was last updated. */
   updatedAt: string;
   rating?: number;
   reviewCount?: number;

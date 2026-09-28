@@ -1,8 +1,8 @@
 import { useSyncExternalStore } from "react";
 import type { Skill, SkillGenre } from "@/lib/skills-data";
 
-// プログラム生成のスキルアート。技ごとに固有・決定的なモーション図を描く。
-// ジャンルで配色、難易度で回転弧の広がり、技idをシードに構図が決まる。
+// Procedurally generated skill art. Draws a unique, deterministic motion diagram per skill.
+// Genre sets the colors, difficulty sets the spread of the rotation arc, and the skill id seeds the composition.
 
 const GENRE_COLOR: Record<SkillGenre, string> = {
   tricking: "#c6e84a",
@@ -53,14 +53,14 @@ function arcPath(cx: number, cy: number, r: number, a0: number, a1: number): str
   return `M ${x0.toFixed(1)} ${y0.toFixed(1)} A ${r} ${r} 0 ${large} 1 ${x1.toFixed(1)} ${y1.toFixed(1)}`;
 }
 
-// ハイドレーション済みかを effect + setState なしで判定する（カスケード再レンダを避ける）。
-// サーバースナップショットは false、クライアントスナップショットは true を返し、値は変化しない。
+// Detects hydration without effect + setState (avoids a cascading re-render).
+// The server snapshot returns false, the client snapshot returns true, and the value never changes.
 const subscribeNever = () => () => {};
 const onClient = () => true;
 const onServer = () => false;
 
-/** SSR 時に描く空の枠。実物と同じ viewBox / class なので占有サイズが一致し、
- *  クライアントで中身が入ってもレイアウトシフトは起きない。 */
+/** Empty frame drawn during SSR. It has the same viewBox / class as the real art, so it takes
+ *  the same space and filling it in on the client causes no layout shift. */
 function ArtFrame() {
   return (
     <svg
@@ -73,13 +73,13 @@ function ArtFrame() {
 }
 
 export function SkillArt({ skill }: { skill: Skill }) {
-  // このアートは aria-hidden の純装飾で、技 id から決定的に再現できる。
-  // SSR HTML に含めると 80 技ぶんで約 320KB（/skills の 73%）になる。nonce CSP 時代は
-  // 全ルートが CDN キャッシュ不可でその全量が毎リクエスト課金されていた。2026-09-12 に
-  // 静的 CSP へ移して /skills は静的化したが、320KB を配る無駄は残る。
-  // 描画コードはハッシュ付きの immutable な
-  // クライアントチャンクに既に入っており CDN から配信されるので、
-  // ハイドレーション後にクライアントで描けば同じ絵が出る。
+  // This art is purely decorative (aria-hidden) and reproducible from the skill id.
+  // Including it in the SSR HTML costs about 320KB for 80 skills (73% of /skills). In the nonce CSP era
+  // no route was CDN-cacheable and all of that was billed on every request. On 2026-09-12
+  // we moved to a static CSP and made /skills static, but shipping 320KB is still wasteful.
+  // The drawing code is already in a hashed, immutable
+  // client chunk served from the CDN,
+  // so drawing on the client after hydration produces the same picture.
   const hydrated = useSyncExternalStore(subscribeNever, onClient, onServer);
 
   const rng = mulberry32(hash(skill.id));
@@ -93,7 +93,7 @@ export function SkillArt({ skill }: { skill: Skill }) {
   const cy = 96 + rng() * 48;
   const baseR = 50 + rng() * 22;
   const rot = rng() * 360;
-  // 回転弧の広がりは難易度に比例（Lv.1 ≈ 96°, Lv.10 ≈ 330°）。
+  // The rotation arc's spread is proportional to difficulty (Lv.1 ≈ 96°, Lv.10 ≈ 330°).
   const sweep = Math.min(330, 70 + skill.lv * 26);
   const dotCount = Math.min(7, Math.max(2, Math.round(skill.lv * 0.7) + 1));
   const wmRot = -18 + rng() * 36;
@@ -135,7 +135,7 @@ export function SkillArt({ skill }: { skill: Skill }) {
         {abbr}
       </text>
 
-      {/* 軌道（モーションパス） */}
+      {/* Trajectory (motion path) */}
       <path
         d={`M ${20 + diagShift * 0.2} 214 Q ${cx} ${cy - 40} ${300 - diagShift * 0.5} 30`}
         fill="none"
@@ -145,7 +145,7 @@ export function SkillArt({ skill }: { skill: Skill }) {
         strokeOpacity="0.6"
       />
 
-      {/* 地面ライン */}
+      {/* Ground line */}
       <line
         x1="16"
         y1={groundY}
@@ -157,7 +157,7 @@ export function SkillArt({ skill }: { skill: Skill }) {
         strokeOpacity="0.55"
       />
 
-      {/* 内側の弧 */}
+      {/* Inner arc */}
       <path
         d={arcPath(cx, cy, baseR - 13, rot + 26, rot + 26 + sweep * 0.66)}
         fill="none"
@@ -167,7 +167,7 @@ export function SkillArt({ skill }: { skill: Skill }) {
         strokeLinecap="round"
       />
 
-      {/* メインの回転弧 */}
+      {/* Main rotation arc */}
       <path
         d={arcPath(cx, cy, baseR, rot, rot + sweep)}
         fill="none"
@@ -177,7 +177,7 @@ export function SkillArt({ skill }: { skill: Skill }) {
         strokeLinecap="round"
       />
 
-      {/* モーションドット */}
+      {/* Motion dots */}
       {dots.map((d) => (
         <circle
           key={d.key}
@@ -189,7 +189,7 @@ export function SkillArt({ skill }: { skill: Skill }) {
         />
       ))}
 
-      {/* 着地マーカー */}
+      {/* Landing marker */}
       <rect
         x={endX - 5}
         y={endY - 5}

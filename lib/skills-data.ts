@@ -1,5 +1,5 @@
-// 6ジャンル80技のスキルデータ。
-// 難易度 lv: 1（基礎）〜10（エリート）。prereqs / leads は技idの配列。
+// Skill data: 80 skills across 6 genres.
+// Difficulty lv: 1 (basic) to 10 (elite). prereqs / leads are arrays of skill ids.
 
 export type SkillGenre = "tricking" | "parkour" | "gym" | "break" | "ski" | "snow";
 
@@ -117,7 +117,7 @@ export const SKILLS: Skill[] = [
   { id: "sb-mctwist", genre: "snow", name_ja: "マクツイスト", name_en: "McTwist", lv: 7, tags: ["flip", "spin"], desc_ja: "540のひねりにバックフリップを足した複合技。", desc_en: "Inverted 540 — flip combined with rotation.", tips_ja: ["バックフリップでセット", "ひねりは頂点で", "視線で着地"], prereqs: ["sb-540", "sb-backflip"], leads: [] },
   { id: "sb-double-cork", genre: "snow", name_ja: "ダブルコーク", name_en: "Double Cork", lv: 9, tags: ["flip", "double", "elite"], desc_ja: "2回のオフアクシスフリップ。コンペ必須。", desc_en: "Two off-axis flips — pro competition staple.", tips_ja: ["強い離陸", "1回目で勢いを作る", "視線で2回目の着地"], prereqs: ["sb-cork"], leads: [] },
 
-  // ─────────── TRICKING 拡張 (14) ───────────
+  // ─────────── TRICKING extended (14) ───────────
   { id: "cheat-360", genre: "tricking", name_ja: "チート360", name_en: "Cheat 360", lv: 2, tags: ["kick", "spin"], desc_ja: "踏み切り前に上体をひねって反動を作る基礎スピンキック。", desc_en: "Basic spinning kick using a pre-rotation cheat.", tips_ja: ["上体のプリセットを深く", "蹴り脚を真っ直ぐ伸ばす", "着地で軸を保つ"], prereqs: [], leads: ["540-kick"] },
   { id: "pop-360", genre: "tricking", name_ja: "ポップ360", name_en: "Pop 360", lv: 3, tags: ["spin", "basic"], desc_ja: "両足踏み切りで真上に跳び1回転するスピン。", desc_en: "Two-foot pop with a full 360 spin.", tips_ja: ["真上への跳躍を意識", "腕で回転を巻き込む", "頭は最後まで残す"], prereqs: [], leads: ["cork"] },
   { id: "flashkick", genre: "tricking", name_ja: "フラッシュキック", name_en: "Flash Kick", lv: 4, tags: ["kick", "backward"], desc_ja: "後方に反りながら脚を振り上げるバック系キック。", desc_en: "Backward kick with an arched, whipping leg.", tips_ja: ["振り上げ脚を鞭のように", "上体の反りで高さを出す", "視線で着地を探す"], prereqs: ["back-tuck"], leads: ["flash-360"] },
@@ -133,7 +133,7 @@ export const SKILLS: Skill[] = [
   { id: "boxcutter", genre: "tricking", name_ja: "ボックスカッター", name_en: "Boxcutter", lv: 8, tags: ["flip", "kick", "off-axis"], desc_ja: "コークの回転中にフックキックを抜く複合技。", desc_en: "Cork combined with a hook kick on the way out.", tips_ja: ["コークのセットを深く", "頂点でキックを抜く", "蹴りで着地方向を定める"], prereqs: ["cork"], leads: [] },
   { id: "gainer-switch", genre: "tricking", name_ja: "ゲイナースイッチ", name_en: "Gainer Switch", lv: 7, tags: ["flip", "backward"], desc_ja: "ゲイナー中に踏み切り脚を入れ替える発展技。", desc_en: "Gainer with a mid-air leg switch.", tips_ja: ["スイング脚を強く前へ", "空中で脚を入れ替える", "回転軸を移動方向に保つ"], prereqs: ["gainer"], leads: [] },
 
-  // ─────────── PARKOUR 拡張 (14) ───────────
+  // ─────────── PARKOUR extended (14) ───────────
   { id: "drop", genre: "parkour", name_ja: "ドロップ", name_en: "Drop", lv: 1, tags: ["safety", "basic"], desc_ja: "高所から飛び降り衝撃を吸収する基本動作。", desc_en: "Controlled landing from a height.", tips_ja: ["母指球から着地", "膝と股関節で吸収", "上体を前傾させすぎない"], prereqs: [], leads: ["parkour-roll"] },
   { id: "rail-balance", genre: "parkour", name_ja: "レールバランス", name_en: "Rail Balance", lv: 1, tags: ["balance", "basic"], desc_ja: "細い縁の上を歩く基礎バランス。", desc_en: "Walking balance on a narrow rail.", tips_ja: ["視線は遠くへ", "腕で微調整", "母指球で縁を掴む"], prereqs: [], leads: ["cat-balance"] },
   { id: "cat-balance", genre: "parkour", name_ja: "キャットバランス", name_en: "Cat Balance", lv: 3, tags: ["balance", "climb"], desc_ja: "手足でレール上を四つ這いで進むバランス。", desc_en: "Quadrupedal balance moving along a rail.", tips_ja: ["重心を低く保つ", "手と足を交互に", "視線は進行方向"], prereqs: ["rail-balance"], leads: [] },
@@ -149,7 +149,7 @@ export const SKILLS: Skill[] = [
   { id: "lache", genre: "parkour", name_ja: "ラシェ", name_en: "Laché", lv: 4, tags: ["jump", "bar"], desc_ja: "バーを掴んで振り、離して次へ跳ぶ動作。", desc_en: "Swinging off a bar and releasing to a target.", tips_ja: ["振りの頂点で離す", "視線を着地点へ", "肩で衝撃を逃がす"], prereqs: ["cat-leap"], leads: [] },
   { id: "climb-up", genre: "parkour", name_ja: "クライムアップ", name_en: "Climb Up", lv: 3, tags: ["climb", "wall"], desc_ja: "壁の縁を掴んだ状態から上に登り切る動作。", desc_en: "Pulling up over the top edge of a wall.", tips_ja: ["足で壁を押す", "引きと押しを連続で", "肘を素早く返す"], prereqs: ["cat-leap"], leads: [] },
 
-  // ─────────── GYMNASTICS 拡張 (13) ───────────
+  // ─────────── GYMNASTICS extended (13) ───────────
   { id: "forward-roll", genre: "gym", name_ja: "前転", name_en: "Forward Roll", lv: 1, tags: ["basic", "rotation"], desc_ja: "前方へ丸まって転がる基礎技。", desc_en: "Basic forward roll.", tips_ja: ["顎を引く", "背中を丸める", "勢いで立ち上がる"], prereqs: [], leads: ["front-handspring"] },
   { id: "backward-roll", genre: "gym", name_ja: "後転", name_en: "Backward Roll", lv: 1, tags: ["basic", "rotation"], desc_ja: "後方へ丸まって転がる基礎技。", desc_en: "Basic backward roll.", tips_ja: ["手を耳の横に構える", "背中を丸める", "手で床を押す"], prereqs: [], leads: ["back-handspring"] },
   { id: "bridge", genre: "gym", name_ja: "ブリッジ", name_en: "Bridge", lv: 2, tags: ["flexibility", "static"], desc_ja: "背中を反らせて支えるブリッジ姿勢。", desc_en: "Back bridge hold.", tips_ja: ["肩の柔軟性を使う", "手足で均等に支える", "胸を開く"], prereqs: [], leads: ["walkover-back"] },
@@ -164,7 +164,7 @@ export const SKILLS: Skill[] = [
   { id: "full-in", genre: "gym", name_ja: "フルイン", name_en: "Full-In", lv: 9, tags: ["flip", "double", "twist", "elite"], desc_ja: "ダブルバックの1回目にひねりを入れる究極技。", desc_en: "Double back with a full twist in the first salto.", tips_ja: ["1回目でひねり切る", "高さを確保", "2回目はタックで締める"], prereqs: ["double-back"], leads: [] },
   { id: "straddle-planche", genre: "gym", name_ja: "ストラドルプランシェ", name_en: "Straddle Planche", lv: 7, tags: ["strength", "static"], desc_ja: "脚を開いて床と平行に支える静止技。", desc_en: "Planche hold with the legs straddled.", tips_ja: ["肩を強く前傾", "脚を大きく開く", "Tuckから段階的に"], prereqs: ["handstand"], leads: ["planche"] },
 
-  // ─────────── BREAKDANCE 拡張 (13) ───────────
+  // ─────────── BREAKDANCE extended (13) ───────────
   { id: "indian-step", genre: "break", name_ja: "インディアンステップ", name_en: "Indian Step", lv: 1, tags: ["standing", "basic"], desc_ja: "トップロックの基礎ステップ。", desc_en: "Foundational top rock step.", tips_ja: ["重心を中央に", "肩でビートを取る", "左右対称に踏む"], prereqs: ["toprock"], leads: [] },
   { id: "kick-out", genre: "break", name_ja: "キックアウト", name_en: "Kick Out", lv: 2, tags: ["footwork"], desc_ja: "脚を伸ばして抜くフットワークの繋ぎ。", desc_en: "Footwork transition extending a leg out.", tips_ja: ["手で支えて脚を抜く", "床スレスレに伸ばす", "リズムを保つ"], prereqs: ["6-step"], leads: [] },
   { id: "coffee-grind", genre: "break", name_ja: "コーヒーグラインダー", name_en: "Coffee Grind", lv: 3, tags: ["footwork", "spin"], desc_ja: "片脚を回し他方を跳び越させる回転フットワーク。", desc_en: "Leg-sweep footwork spin (helicopter).", tips_ja: ["片手で支える", "回す脚を低く", "跳ぶ脚のタイミング"], prereqs: ["6-step"], leads: [] },
@@ -179,7 +179,7 @@ export const SKILLS: Skill[] = [
   { id: "hollowback", genre: "break", name_ja: "ホローバック", name_en: "Hollow Back", lv: 7, tags: ["freeze", "strength"], desc_ja: "背中を反らせた倒立姿勢で静止するフリーズ。", desc_en: "Arched handstand freeze.", tips_ja: ["肩の柔軟性を使う", "胸を開く", "腕でしっかり支える"], prereqs: ["handstand"], leads: [] },
   { id: "nike-freeze", genre: "break", name_ja: "ナイキフリーズ", name_en: "Nike Freeze", lv: 4, tags: ["freeze"], desc_ja: "片手と頭で支え脚を斜めに伸ばすフリーズ。", desc_en: "Angled freeze on one hand and the head.", tips_ja: ["肘を腰に当てる", "脚で斜めのラインを作る", "頭と手で三点支持"], prereqs: ["baby-freeze"], leads: [] },
 
-  // ─────────── SKI 拡張 (13) ───────────
+  // ─────────── SKI extended (13) ───────────
   { id: "ski-ollie", genre: "ski", name_ja: "ski オーリー", name_en: "Ski Ollie", lv: 1, tags: ["basic", "air"], desc_ja: "板の反発を使って跳ぶ基礎の飛び出し。", desc_en: "Basic pop using the ski's flex.", tips_ja: ["後方に荷重して反発を使う", "膝を引き上げる", "板を水平に保つ"], prereqs: [], leads: ["ski-180"] },
   { id: "ski-butter", genre: "ski", name_ja: "バター", name_en: "Butter", lv: 2, tags: ["stylish", "basic"], desc_ja: "板の前後を雪面で滑らせるプレス系トリック。", desc_en: "Nose/tail press slid along the snow.", tips_ja: ["片足に荷重を寄せる", "上体でバランスを取る", "ゆっくり戻す"], prereqs: [], leads: [] },
   { id: "ski-900", genre: "ski", name_ja: "ski 900", name_en: "Ski 900", lv: 6, tags: ["spin"], desc_ja: "2回転半のスピン。", desc_en: "Two-and-a-half rotation spin.", tips_ja: ["離陸角度を深く", "腕で回転を絞る", "2回転目で着地を予測"], prereqs: ["ski-720"], leads: ["ski-1080"] },
@@ -194,7 +194,7 @@ export const SKILLS: Skill[] = [
   { id: "ski-dub-1260", genre: "ski", name_ja: "ダブルコーク1260", name_en: "Double Cork 1260", lv: 9, tags: ["flip", "double", "elite"], desc_ja: "斜め軸で2回フリップしつつ3.5回転する競技必須技。", desc_en: "Double off-axis flip with 1260 of rotation.", tips_ja: ["強い離陸で高さを確保", "回転とフリップを同期", "視線で着地を探し続ける"], prereqs: ["ski-double-cork"], leads: [] },
   { id: "ski-rail-slide", genre: "ski", name_ja: "レールスライド", name_en: "Rail Slide", lv: 4, tags: ["rail"], desc_ja: "レールやボックスを板で滑るジブトリック。", desc_en: "Sliding a rail or box on the skis.", tips_ja: ["板をレールに直角に乗せる", "目線は先へ", "膝で衝撃を吸収"], prereqs: [], leads: [] },
 
-  // ─────────── SNOWBOARD 拡張 (13) ───────────
+  // ─────────── SNOWBOARD extended (13) ───────────
   { id: "sb-tindy", genre: "snow", name_ja: "ティンディグラブ", name_en: "Tindy Grab", lv: 3, tags: ["grab"], desc_ja: "後ろ手で背中側エッジのつま先寄りを掴むグラブ。", desc_en: "Trailing-hand grab near the heel-edge toe side.", tips_ja: ["脚を引き上げる", "手を短くまとめる", "ホールドを意識"], prereqs: ["sb-indy"], leads: [] },
   { id: "sb-melon", genre: "snow", name_ja: "メロングラブ", name_en: "Melon Grab", lv: 3, tags: ["grab"], desc_ja: "前手で背中側エッジを掴むグラブ。", desc_en: "Front-hand grab on the heel edge.", tips_ja: ["体を背中側にひねる", "膝を抱える", "ホールドを長く"], prereqs: ["sb-ollie"], leads: [] },
   { id: "sb-crail", genre: "snow", name_ja: "クレイルグラブ", name_en: "Crail Grab", lv: 4, tags: ["grab"], desc_ja: "後ろ手で前足側のつま先エッジを掴むグラブ。", desc_en: "Trailing hand grabbing the front-toe edge.", tips_ja: ["前脚を伸ばし気味に", "上体をひねる", "視線は進行方向"], prereqs: ["sb-ollie"], leads: [] },

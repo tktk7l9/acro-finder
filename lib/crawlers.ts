@@ -1,13 +1,13 @@
-/** 学習データ収集・AI要約目的のクローラー。
+/** Crawlers that collect training data or build AI summaries.
  *
- *  2026-09-12 に nonce CSP をやめ、大半のルートは CDN キャッシュに乗るようになった。
- *  ただし area/[pref] と facilities/[id] は generateStaticParams が無く動的のままで、
- *  そこへの巡回は今も 1 リクエスト = ページ全体のバイト数がそのまま転送量になる。
- *  sitemap に 127 URL あるため、
- *  巡回の激しい AI クローラーを素通しにすると無料枠 10GB を短期間で使い切る。
+ *  On 2026-09-12 we dropped the nonce CSP and most routes became CDN-cacheable.
+ *  However, area/[pref] and facilities/[id] have no generateStaticParams and stay dynamic,
+ *  so each crawl request there still costs the full page's bytes in transfer.
+ *  With 127 URLs in the sitemap,
+ *  letting aggressive AI crawlers through would use up the 10GB free tier quickly.
  *
- *  検索流入は事業上の生命線なので Googlebot / Bingbot は通す。
- *  Google-Extended は Gemini の学習利用のみを制御し、検索インデックスには影響しない。 */
+ *  Search traffic is the lifeline of the business, so Googlebot / Bingbot are allowed.
+ *  Google-Extended only controls use for Gemini training and does not affect the search index. */
 export const DISALLOWED_AI_CRAWLERS = [
   "AI2Bot",
   "Amazonbot",

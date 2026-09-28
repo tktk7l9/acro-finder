@@ -1,11 +1,11 @@
 import { SKILL_GENRES, type Skill, type SkillGenre } from "@/lib/skills-data";
 
-// 技の相関図（アイソメトリック3D）。
-//   難易度(Lv)     … 横の地面軸（右下方向）
-//   類似クラスタ   … 奥行きの地面軸（左下方向）。タグの共通性でまとめるため、
-//                    ジャンルが違っても似た技は同じレーンに近接する。
-//   派生段階       … 高さ軸（同一セルの技を上へ積む）
-// ジャンルはノードの色で表す。
+// Skill relationship map (isometric 3D).
+//   Difficulty (Lv)     … horizontal ground axis (toward bottom-right)
+//   Similarity cluster  … depth ground axis (toward bottom-left). Grouped by shared tags,
+//                         so similar skills sit near each other in the same lane even across genres.
+//   Derivation stage    … height axis (skills in the same cell stack upward)
+// Genre is shown by node color.
 
 const GENRE_COLOR: Record<SkillGenre, string> = {
   tricking: "#c6e84a",
@@ -22,7 +22,7 @@ const GENRE_LEGEND = SKILL_GENRES.filter((g) => g.id !== "all").map(
   (g) => g.id as SkillGenre,
 );
 
-// 似た技クラスタ。上から順に判定し、最初にタグが一致したクラスタへ割り当てる。
+// Similar-skill clusters. Checked top to bottom; a skill goes to the first cluster whose tags match.
 const CLUSTERS: { name: string; tags: string[] }[] = [
   { name: "フリップ系", tags: ["flip", "tumbling", "double"] },
   { name: "キック系", tags: ["kick", "sweep"] },
@@ -31,7 +31,7 @@ const CLUSTERS: { name: string; tags: string[] }[] = [
   { name: "ウォール・クライム系", tags: ["wall", "climb"] },
   { name: "パワー・フリーズ系", tags: ["power", "freeze", "static", "strength"] },
   { name: "スピン系", tags: ["spin"] },
-  { name: "基礎・移動系", tags: [] }, // 受け皿
+  { name: "基礎・移動系", tags: [] }, // catch-all
 ];
 
 function clusterOf(skill: Skill): number {
@@ -82,7 +82,7 @@ export function SkillGraph({
   const levels = [...new Set(skills.map((s) => s.lv))].sort((a, b) => a - b);
   const liOf = new Map(levels.map((lv, i) => [lv, i]));
 
-  // 同一クラスタ・同一Lvの技を積み上げ順に並べる（ジャンルでまとめる）。
+  // Order skills of the same cluster and Lv in stacking order (grouped by genre).
   const cell = new Map<string, Skill[]>();
   for (const s of skills) {
     const k = `${clusterIdx.get(s.id)}|${s.lv}`;
@@ -142,7 +142,7 @@ export function SkillGraph({
       width={width}
       height={height}
     >
-      {/* 類似クラスタ・レーン（奥行き地面軸） */}
+      {/* Similarity cluster lanes (depth ground axis) */}
       {present.map((c, ci) => {
         const x0 = offX + ci * CL_DX;
         const y0 = offY + ci * CL_DY;
@@ -170,7 +170,7 @@ export function SkillGraph({
         );
       })}
 
-      {/* 難易度ラベル（横の地面軸） */}
+      {/* Difficulty labels (horizontal ground axis) */}
       {levels.map((lv, li) => (
         <text
           key={`lv${lv}`}
@@ -183,7 +183,7 @@ export function SkillGraph({
         </text>
       ))}
 
-      {/* 辺（前提技 → 派生技） */}
+      {/* Edges (prerequisite skill → derived skill) */}
       {edges.map((e, i) => {
         const a = center(e.from);
         const b = center(e.to);
@@ -200,7 +200,7 @@ export function SkillGraph({
         );
       })}
 
-      {/* ノード（色＝ジャンル） */}
+      {/* Nodes (color = genre) */}
       {drawOrder.map((s) => {
         const p = pos.get(s.id)!;
         const color = GENRE_COLOR[s.genre];
@@ -230,7 +230,7 @@ export function SkillGraph({
         );
       })}
 
-      {/* 3軸の凡例 */}
+      {/* Legend for the 3 axes */}
       <text className="skl-graph-axis" x={14} y={height - 62}>
         難易度 →
       </text>
@@ -241,7 +241,7 @@ export function SkillGraph({
         派生段階 ↑
       </text>
 
-      {/* ジャンル凡例（ノード色） */}
+      {/* Genre legend (node colors) */}
       {GENRE_LEGEND.map((g, i) => (
         <g key={`leg${g}`} transform={`translate(${14 + i * 96} ${height - 14})`}>
           <rect width={9} height={9} rx={2} y={-8} fill={GENRE_COLOR[g]} />

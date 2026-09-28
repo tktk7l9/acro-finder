@@ -1,8 +1,8 @@
 import type { NextConfig } from "next";
 import { contentSecurityPolicy } from "./lib/csp";
 
-// CSP は lib/csp.ts が正本。以前は proxy.ts が per-request で nonce 付きの CSP を
-// 発行していたが、middleware を廃止して静的ヘッダーに移した。
+// lib/csp.ts is the source of truth for the CSP. proxy.ts used to issue a per-request CSP
+// with a nonce, but we removed the middleware and moved to a static header.
 const securityHeaders = [
   {
     key: "Content-Security-Policy",

@@ -43,10 +43,10 @@ export default async function FacilitiesIndexPage() {
                 {g.prefecture.name}
                 <span className="count">（{g.facilities.length}）</span>
               </h2>
-              {/* 都道府県ぶん並ぶうえ、リンク先の area ページは 1 件あたり約 57KB。
-                  リンク先の area/[pref] は generateStaticParams が無く動的のままで
-                  CDN キャッシュに乗らないため、47 件をまとめて先読みする転送量は
-                  依然として割に合わない。nonce CSP を外しても切ったまま。 */}
+              {/* One of these appears per prefecture, and each linked area page is about 57KB.
+                  The linked area/[pref] has no generateStaticParams, so it stays dynamic
+                  and is not CDN-cached; prefetching all 47 at once still costs more
+                  transfer than it is worth. Kept off even after dropping the nonce CSP. */}
               <Link href={`/area/${g.slug}`} prefetch={false}>
                 このエリアを見る →
               </Link>

@@ -1,9 +1,9 @@
 import type { EquipmentFilter, Facility, TypeFilter } from "./types";
 
-// 実在するトリッキング/パルクール/アクロバット練習施設。
-// 名称・住所・エリア・座標・公式リンクは実データ。営業時間・器具・レッスン等は
-// 公式サイトに記載のある施設のみ収録（出典の無い項目は未掲載）。
-// 距離(distance)は東京駅を基準点とした概算値。写真は準備中のプレースホルダー。
+// Real tricking / parkour / acrobatics practice facilities.
+// Names, addresses, areas, coordinates and official links are real data. Hours, equipment,
+// lessons, etc. are included only for facilities whose official site lists them (unsourced items are omitted).
+// distance is an approximation measured from Tokyo Station. Photos are placeholders pending real ones.
 export const FACILITIES: Facility[] = [
   {
     id: "f01",

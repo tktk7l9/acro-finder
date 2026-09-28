@@ -1,4 +1,4 @@
-/* === アクロバット練習施設 検索アプリ === */
+/* === Acrobatics practice facility search app === */
 
 :root {
   --bg: #0e0f0d;
@@ -1809,7 +1809,7 @@ button {
 }
 
 /* ===================================================================
-   技ガイド / Skills — トリッキング・パルクール等の技カタログ
+   Skill guide / Skills — catalog of tricking, parkour and other skills
    =================================================================== */
 .skills-app {
   display: grid;
