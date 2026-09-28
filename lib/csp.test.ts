@@ -4,11 +4,11 @@ import { contentSecurityPolicy } from "./csp";
 describe("contentSecurityPolicy", () => {
   const prod = contentSecurityPolicy();
 
-  it("nonce を含まない（middleware を廃止したので発行元が無い）", () => {
+  it("contains no nonce (middleware was removed, so nothing issues one)", () => {
     expect(prod).not.toContain("nonce-");
   });
 
-  it("'strict-dynamic' を含まない", () => {
+  it("does not contain 'strict-dynamic'", () => {
     // Under CSP Level 3, 'strict-dynamic' makes the allowlist and 'self' / 'unsafe-inline'
     // ignored. Adding it to this setup, which has no nonce or hash, removes the root of trust
     // and every script on the page stops. If you add it, provide a nonce or hash at the same time.
@@ -17,7 +17,7 @@ describe("contentSecurityPolicy", () => {
     expect(contentSecurityPolicy({ dev: true })).not.toContain("strict-dynamic");
   });
 
-  it("インラインを許すことを script-src に明示している", () => {
+  it("explicitly allows inline scripts in script-src", () => {
     // Pin it including the trailing ;. Otherwise it would still pass if loose values were
     // appended after it, as in "'unsafe-inline' https: *".
     expect(prod).toContain(
@@ -25,23 +25,23 @@ describe("contentSecurityPolicy", () => {
     );
   });
 
-  it("本番では 'unsafe-eval' を出さない", () => {
+  it("omits 'unsafe-eval' in production", () => {
     expect(prod).not.toContain("unsafe-eval");
   });
 
-  it("dev では Next のオーバーレイ用に 'unsafe-eval' を足す", () => {
+  it("adds 'unsafe-eval' in dev for the Next overlay", () => {
     expect(contentSecurityPolicy({ dev: true })).toContain("'unsafe-eval'");
   });
 
-  it("地図タイルと施設写真のため img-src に blob: と https: を許す", () => {
+  it("allows blob: and https: in img-src for map tiles and facility photos", () => {
     expect(prod).toContain("img-src 'self' data: blob: https:");
   });
 
-  it("worker-src に blob: を許す（地図ライブラリが Worker を起こす）", () => {
+  it("allows blob: in worker-src (the map library spawns a Worker)", () => {
     expect(prod).toContain("worker-src 'self' blob:");
   });
 
-  it("締めるべきディレクティブが揃っている", () => {
+  it("has every directive that should be locked down", () => {
     for (const directive of [
       "default-src 'self'",
       "style-src 'self' 'unsafe-inline'",
@@ -58,7 +58,7 @@ describe("contentSecurityPolicy", () => {
     }
   });
 
-  it("Cloudflare Web Analytics のビーコンに必要な2オリジンを許可している", () => {
+  it("allows both origins the Cloudflare Web Analytics beacon needs", () => {
     // The beacon is loaded from static.cloudflareinsights.com and POSTs its data to
     // cloudflareinsights.com. **If either is missing, the page still looks fine
     // while only the beacon is silently blocked** (only a CSP violation shows
@@ -67,7 +67,7 @@ describe("contentSecurityPolicy", () => {
     expect(prod).toContain("connect-src 'self' https://cloudflareinsights.com;");
   });
 
-  it("ディレクティブは ; 区切りで、末尾に余分な ; を付けない", () => {
+  it("separates directives with ; and adds no trailing ;", () => {
     expect(prod.endsWith(";")).toBe(false);
     expect(prod).not.toContain(";;");
   });
