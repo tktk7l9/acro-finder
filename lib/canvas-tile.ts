@@ -11,6 +11,14 @@
 //
 // The image is loaded without `crossOrigin`: GSI tiles are only drawn, never
 // read back, so a tainted canvas is fine and no CORS response is required.
+//
+// Returns an abort function. L.TileLayer cancels the download of a tile that
+// leaves the view before it arrives (by swapping its src for an empty image);
+// the canvas layer has to do the same through this, or panning and zooming on a
+// phone keeps fetching tiles nobody will see.
+
+// Same 1x1 GIF as L.Util.emptyImageUrl.
+export const EMPTY_IMAGE_URL = "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
 
 export type TileDone = (error: Error | undefined, tile: HTMLCanvasElement) => void;
 
@@ -19,17 +27,28 @@ export function loadTileIntoCanvas(
   url: string,
   done: TileDone,
   createImage: () => HTMLImageElement = () => new Image(),
-): void {
+): () => void {
   const img = createImage();
+  let settled = false;
   img.decoding = "async";
   img.onload = () => {
+    settled = true;
     img.onload = img.onerror = null;
     canvas.getContext("2d")?.drawImage(img, 0, 0, canvas.width, canvas.height);
     done(undefined, canvas);
   };
   img.onerror = () => {
+    settled = true;
     img.onload = img.onerror = null;
     done(new Error(`Tile failed to load: ${url}`), canvas);
   };
   img.src = url;
+  // Cancel the request if it is still in flight. `done` is not called: the
+  // caller has already dropped the tile.
+  return () => {
+    if (settled) return;
+    settled = true;
+    img.onload = img.onerror = null;
+    img.src = EMPTY_IMAGE_URL;
+  };
 }

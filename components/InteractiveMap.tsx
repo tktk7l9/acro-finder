@@ -17,6 +17,26 @@ import {
 
 const GSI_PALE_URL = "https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png";
 
+// Abort functions of tiles whose image is still downloading.
+const pendingTiles = new WeakMap<HTMLElement, () => void>();
+
+function abortTile(el: HTMLElement): boolean {
+  const abort = pendingTiles.get(el);
+  if (!abort) return false;
+  pendingTiles.delete(el);
+  abort();
+  return true;
+}
+
+// GridLayer internals that L.TileLayer also relies on for aborting.
+type GridLayerInternals = L.GridLayer & {
+  _tiles: Record<string, { el: HTMLElement; coords: L.Coords }>;
+  _tileZoom?: number;
+};
+const gridRemoveTile = (L.GridLayer.prototype as unknown as {
+  _removeTile(this: L.GridLayer, key: string): void;
+})._removeTile;
+
 // Basemap layer that paints each tile into a <canvas> rather than an <img>, so a
 // tile never becomes the page's LCP element (see lib/canvas-tile.ts).
 const CanvasTileLayer = L.GridLayer.extend({
@@ -25,8 +45,29 @@ const CanvasTileLayer = L.GridLayer.extend({
     const size = this.getTileSize();
     tile.width = size.x;
     tile.height = size.y;
-    loadTileIntoCanvas(tile, L.Util.template(GSI_PALE_URL, coords), done);
+    const abort = loadTileIntoCanvas(tile, L.Util.template(GSI_PALE_URL, coords), (err, el) => {
+      pendingTiles.delete(tile);
+      done(err, el);
+    });
+    pendingTiles.set(tile, abort);
     return tile;
+  },
+  // Like L.TileLayer: on a zoom change, drop tiles of other zoom levels that
+  // are still downloading, so a pinch-zoom does not wait on stale requests.
+  _abortLoading(this: GridLayerInternals) {
+    for (const key of Object.keys(this._tiles)) {
+      const { el, coords } = this._tiles[key];
+      if (coords.z === this._tileZoom || !abortTile(el)) continue;
+      L.DomUtil.remove(el);
+      delete this._tiles[key];
+      this.fire("tileabort", { tile: el, coords });
+    }
+  },
+  // Like L.TileLayer: cancel the download of a tile that leaves the view.
+  _removeTile(this: GridLayerInternals, key: string) {
+    const tile = this._tiles[key];
+    if (tile) abortTile(tile.el);
+    gridRemoveTile.call(this, key);
   },
 }) as new (options?: L.GridLayerOptions) => L.GridLayer;
 
