@@ -197,12 +197,14 @@ export function SkillsApp() {
         <div className="topbar-actions">
           <button
             className={`btn${showFavOnly ? " btn-primary" : ""}`}
+            aria-pressed={showFavOnly}
             onClick={() => setShowFavOnly((v) => !v)}
           >
             ★ お気に入り {favs.size}
           </button>
           <button
             className={`btn${showDoneOnly ? " btn-primary" : ""}`}
+            aria-pressed={showDoneOnly}
             onClick={() => setShowDoneOnly((v) => !v)}
           >
             ✓ 習得済み {dones.size}

@@ -94,5 +94,13 @@ describe("SkillsApp", () => {
       const { getByText } = render(<SkillsApp />);
       expect(getByText("▼ 折りたたみ")).toBeTruthy();
     });
+
+    it("exposes the favourite / learned filters' state", () => {
+      const { getByText } = render(<SkillsApp />);
+      const fav = getByText(/お気に入り/).closest("button") as HTMLElement;
+      expect(fav.getAttribute("aria-pressed")).toBe("false");
+      fireEvent.click(fav);
+      expect(fav.getAttribute("aria-pressed")).toBe("true");
+    });
   });
 });

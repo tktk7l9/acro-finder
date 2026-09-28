@@ -2685,7 +2685,10 @@ button {
     scrollbar-width: none;
   }
   .top-nav::-webkit-scrollbar { display: none; }
-  .top-nav-link { white-space: nowrap; flex-shrink: 0; }
+  .top-nav-link { white-space: nowrap; flex-shrink: 0; padding: 6px 10px; }
+  /* Drop the decorative glyphs so all four tabs fit a 390px screen and none
+     (often the current one) hides past the edge (SHIG 59, 76). */
+  .top-nav-icon { display: none; }
 
   .search {
     order: 4;
@@ -2712,6 +2715,16 @@ button {
   .app .topbar-actions .geo-error,
   .app .topbar-actions .geo-ok { white-space: normal; }
   .app .topbar-actions .btn { padding: 8px 12px; font-size: 12px; }
+  /* Skills: the ★ / ✓ filters are the only way to reach saved skills, so they
+     must not vanish on phones (SHIG 37, 82). */
+  .skills-app .topbar-actions {
+    display: flex;
+    order: 6;
+    flex-basis: 100%;
+    margin-left: 0;
+    gap: 6px;
+  }
+  .skills-app .topbar-actions .btn { flex: 1; justify-content: center; padding: 7px 10px; }
 
   /* Home — map preview on top, the scrolling list fills the rest */
   .main {
