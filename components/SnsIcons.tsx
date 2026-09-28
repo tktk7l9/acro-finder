@@ -1,12 +1,12 @@
 // Monochrome platform logos — fill/stroke via currentColor so the
 // .card-sns hover (ink-2 → accent) keeps working.
 //
-// 施設カードごとに同じロゴを描くため、トップでは 143 個の <svg> が出る。
-// パス定義を全文インライン展開すると約 58KB になり、その 96% が重複だった。
-// nonce CSP 時代は全ルートが CDN キャッシュ不可で毎リクエストが課金対象だった。
-// 2026-09-12 に静的 CSP へ移して /facilities は静的化したのでその前提は消えたが、
-// 58KB の 96% が重複という無駄自体は変わらないので、<symbol> を一度だけ置いて
-// 各所は <use> で参照する（1 箇所あたり約 580B → 約 70B）。
+// Every facility card draws the same logos, so the top page emits 143 <svg> elements.
+// Inlining the full path definitions came to about 58KB, 96% of it duplicated.
+// In the nonce CSP era no route was CDN-cacheable and every request was billed.
+// On 2026-09-12 we moved to a static CSP and made /facilities static, so that premise is gone,
+// but 96% of 58KB being duplicated is still waste, so each <symbol> is placed once
+// and every use site references it with <use> (about 580B → about 70B each).
 
 type IconProps = { size?: number };
 
@@ -18,7 +18,7 @@ const SPRITE_ID = {
   tiktok: "sns-tiktok",
 } as const;
 
-/** 全アイコンの実体。レイアウトで一度だけ描画する。 */
+/** Definitions for every icon. Rendered once in the layout. */
 export function SnsIconSprite() {
   return (
     <svg

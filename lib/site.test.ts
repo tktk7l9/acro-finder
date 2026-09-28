@@ -7,21 +7,21 @@ describe("SITE_URL", () => {
   });
 
   it("vercel.app を含まない", () => {
-    // Vercel の Hobby アカウントは 2026-08-11 から停止していて配信されない。
-    // ここが vercel.app に戻ると canonical・sitemap・OGP が死んだURLを指す。
+    // The Vercel Hobby account has been suspended since 2026-08-11 and serves nothing.
+    // If this goes back to vercel.app, canonical, sitemap and OGP point at a dead URL.
     expect(SITE_URL).not.toContain("vercel.app");
   });
 
   it("localhost を含まない", () => {
-    // 移行前は VERCEL_PROJECT_PRODUCTION_URL が無いと localhost に落ちる実装で、
-    // Workers にはその環境変数が無い。env 読みを復活させるとビルドもページ表示も
-    // 正常なまま canonical と sitemap だけが localhost を指す。
+    // Before the migration the code fell back to localhost without VERCEL_PROJECT_PRODUCTION_URL,
+    // and Workers does not have that variable. Bringing back the env read would leave the build and
+    // pages working while only canonical and sitemap point at localhost.
     expect(SITE_URL).not.toContain("localhost");
   });
 
   it("末尾スラッシュを持たない", () => {
-    // 各所で `${SITE_URL}/facilities/${id}` のように連結するので、
-    // 末尾スラッシュがあると // になる。
+    // It is concatenated in many places, as in `${SITE_URL}/facilities/${id}`,
+    // so a trailing slash would produce //.
     expect(SITE_URL.endsWith("/")).toBe(false);
   });
 

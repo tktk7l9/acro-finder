@@ -10,7 +10,7 @@ const config = [
       "coverage/**",
       "node_modules/**",
       "next-env.d.ts",
-      // OpenNext / wrangler の生成物。lint 対象に入れると数百件のエラーになる。
+      // OpenNext / wrangler output. Linting it produces hundreds of errors.
       ".open-next/**",
       ".wrangler/**",
     ],

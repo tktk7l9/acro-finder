@@ -17,9 +17,9 @@ next-env.d.ts
 *.log
 
 # local env files
-# keyway pull -e <env> は .env.development / .env.production という名前で書き出す。
-# .env*.local と .env だけだとそれらが素通りして、public リポジトリに Resend の
-# API キーが載る。.env.* をまとめて無視し、example だけ通す。
+# keyway pull -e <env> writes files named .env.development / .env.production.
+# Ignoring only .env*.local and .env lets those slip through and puts the Resend
+# API key in a public repository. Ignore all .env.* and let only the examples through.
 .env
 .env.*
 !.env*.example
@@ -30,6 +30,6 @@ next-env.d.ts
 # coverage
 /coverage
 
-# @opennextjs/cloudflare のビルド生成物 / wrangler のローカル状態
+# @opennextjs/cloudflare build output / wrangler local state
 .open-next/
 .wrangler/

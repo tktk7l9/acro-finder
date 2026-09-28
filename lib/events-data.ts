@@ -4,10 +4,10 @@ import { todayJst, addDaysIso } from "./util";
 export type EventType = "comp" | "jam" | "ws" | "shoot";
 export type EventStatus = "open" | "soon" | "full" | "closed" | "past";
 
-// 実在のパルクール/トリッキング大会・イベント。
-// 出典: PTvillage 大会・イベントアーカイブ (https://pt-village.com/event/)。
-// 大会は公共会場で開催され特定の練習施設に紐づかないため facilityId は持たず、
-// 会場は venue に記録する。定員・参加費等は非公開のため任意項目。
+// Real parkour / tricking competitions and events.
+// Source: PTvillage competition and event archive (https://pt-village.com/event/).
+// Competitions are held at public venues and are not tied to a practice facility, so they have
+// no facilityId and the venue is stored in venue. Capacity, fees, etc. are not public, so they are optional.
 export interface AcroEvent {
   id: string;
   title: string;
@@ -21,9 +21,9 @@ export interface AcroEvent {
   featured: boolean;
   cover: PhotoColor;
   description: string;
-  /** 開催会場（市区町村・会場名）。 */
+  /** Venue (municipality and venue name). */
   venue?: string;
-  /** 関連する施設ID（施設主催の場合のみ）。 */
+  /** Related facility ID (only when hosted by a facility). */
   facilityId?: string;
   endDate?: string;
   time?: string;

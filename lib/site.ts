@@ -1,12 +1,12 @@
-// 公開URLの唯一の定義。canonical / metadataBase / sitemap / robots / JSON-LD が
-// すべてここを参照する。
+// The single definition of the public URL. canonical / metadataBase / sitemap / robots / JSON-LD
+// all refer to it.
 //
-// 2026-09-14 に Vercel から Cloudflare Workers へ移行した。移行前は
-// `VERCEL_PROJECT_PRODUCTION_URL` から組み立て、無ければ localhost に落ちていた。
-// Workers ではその環境変数が存在しないので、そのままだと **本番の canonical と
-// sitemap が http://localhost:3000 になる**（ビルドは通り、ページも正常に見える）。
-// 静かに壊れる形なので、env を読むのをやめて定数にしてある。
-// site.test.ts が旧Vercelドメインへの差し戻しと末尾スラッシュを止める。
+// Migrated from Vercel to Cloudflare Workers on 2026-09-14. Before that it was built from
+// `VERCEL_PROJECT_PRODUCTION_URL` and fell back to localhost when missing.
+// That variable does not exist on Workers, so as-is **production canonical and
+// sitemap would become http://localhost:3000** (the build passes and pages look fine).
+// Since it breaks silently, we stopped reading env and made it a constant.
+// site.test.ts blocks a revert to the old Vercel domain and a trailing slash.
 export const SITE_URL = "https://acro-finder.saitotakuya0719.workers.dev";
 
 export const SITE_NAME = "ACRO/FINDER";

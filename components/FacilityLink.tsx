@@ -3,12 +3,12 @@ import type { Facility } from "@/lib/types";
 
 // Compact, crawlable link card used on the index and area pages.
 //
-// prefetch を切っているのは、この 1 コンポーネントが /facilities に 99 個並ぶため。
-// 既定ではビューポートに入った時点で全件のRSCを先読みするが、リンク先の
-// facilities/[id] は generateStaticParams が無く動的のままで CDN キャッシュに乗らないため、
-// その全てがそのまま転送量になる（nonce CSP をやめても、この 1 ルートは状況が変わっていない）
-// （実測: 軽くスクロールしただけで 21 リクエスト / 約 25KB）。
-// 利用者が実際に開くのは 99 件のうち数件なので、先読みの価値より転送コストが上回る。
+// Prefetch is off because this one component appears 99 times on /facilities.
+// By default the RSC of every link is prefetched once it enters the viewport, but the linked
+// facilities/[id] has no generateStaticParams, stays dynamic and is not CDN-cached,
+// so all of it becomes transfer as-is (dropping the nonce CSP did not change this route)
+// (measured: 21 requests / about 25KB from a light scroll).
+// Users actually open only a few of the 99, so the transfer cost outweighs the prefetch value.
 export function FacilityLink({ facility }: { facility: Facility }) {
   return (
     <Link href={`/facilities/${facility.id}`} className="fac-link" prefetch={false}>
