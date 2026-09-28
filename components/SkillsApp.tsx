@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { TopNav } from "./TopNav";
 import { SKILLS, SKILL_GENRES, type Skill, type SkillGenre } from "@/lib/skills-data";
 import { SkillArt } from "./SkillArt";
 import { SkillGraph } from "./SkillGraph";
@@ -160,25 +161,14 @@ export function SkillsApp() {
   return (
     <div className="skills-app">
       <header className="topbar">
-        <div className="brand">
+        <Link href="/" className="brand" aria-label="ACRO/FINDER ホーム">
           <div className="brand-mark">A</div>
           <div>
             ACRO<span style={{ color: "var(--ink-3)" }}>/</span>FINDER
             <div className="jp">アクロバット練習施設</div>
           </div>
-        </div>
-        <nav className="top-nav">
-          <Link href="/" className="top-nav-link">
-            <span className="top-nav-icon">▣</span>施設マップ
-          </Link>
-          <Link href="/events" className="top-nav-link">
-            <span className="top-nav-icon">◈</span>イベント
-          </Link>
-          <span className="top-nav-link active">
-            <span className="top-nav-icon">◆</span>技ガイド
-            <span className="top-nav-badge">{SKILLS.length}</span>
-          </span>
-        </nav>
+        </Link>
+        <TopNav active="skills" badges={{ skills: SKILLS.length }} />
         <div className="search">
           <span className="search-icon">⌕</span>
           <input

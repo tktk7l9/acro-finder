@@ -10,7 +10,7 @@ import {
   ViewTransition,
 } from "react";
 import dynamic from "next/dynamic";
-import Link from "next/link";
+import { TopNav } from "@/components/TopNav";
 import { EQUIPMENT_FILTERS, FACILITIES, TYPE_FILTERS } from "@/lib/data";
 import { EVENTS } from "@/lib/events-data";
 import type { SortKey } from "@/lib/types";
@@ -235,21 +235,7 @@ export default function Page() {
             <div className="jp">アクロバット練習施設</div>
           </div>
         </div>
-        <nav className="top-nav">
-          <span className="top-nav-link active">
-            <span className="top-nav-icon">▣</span>施設マップ
-          </span>
-          <Link href="/facilities" className="top-nav-link">
-            <span className="top-nav-icon">▤</span>施設一覧
-          </Link>
-          <Link href="/events" className="top-nav-link">
-            <span className="top-nav-icon">◈</span>イベント
-            <span className="top-nav-badge">{EVENT_COUNT}</span>
-          </Link>
-          <Link href="/skills" className="top-nav-link">
-            <span className="top-nav-icon">◆</span>技ガイド
-          </Link>
-        </nav>
+        <TopNav active="map" badges={{ events: EVENT_COUNT }} />
         <div className="search">
           <span className="search-icon">⌕</span>
           <input

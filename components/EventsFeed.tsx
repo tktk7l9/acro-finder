@@ -2,6 +2,7 @@
 
 import { useMemo, useState, type CSSProperties } from "react";
 import Link from "next/link";
+import { TopNav } from "./TopNav";
 import { EVENT_TYPES, EVENTS, eventStatus } from "@/lib/events-data";
 import { fmtEventDate, todayJst } from "@/lib/util";
 import { EventCard } from "./EventCard";
@@ -84,25 +85,14 @@ export function EventsFeed() {
   return (
     <div className="events-app">
       <header className="topbar">
-        <div className="brand">
+        <Link href="/" className="brand" aria-label="ACRO/FINDER ホーム">
           <div className="brand-mark">A</div>
           <div>
             ACRO<span style={{ color: "var(--ink-3)" }}>/</span>FINDER
             <div className="jp">アクロバット練習施設</div>
           </div>
-        </div>
-        <nav className="top-nav">
-          <Link href="/" className="top-nav-link">
-            <span className="top-nav-icon">▣</span>施設マップ
-          </Link>
-          <span className="top-nav-link active">
-            <span className="top-nav-icon">◈</span>イベント
-            <span className="top-nav-badge">{EVENTS.length}</span>
-          </span>
-          <Link href="/skills" className="top-nav-link">
-            <span className="top-nav-icon">◆</span>技ガイド
-          </Link>
-        </nav>
+        </Link>
+        <TopNav active="events" badges={{ events: EVENTS.length }} />
         <div className="search">
           <span className="search-icon">⌕</span>
           <input
