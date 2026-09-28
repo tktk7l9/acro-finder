@@ -2,8 +2,13 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, fireEvent } from "@testing-library/react";
 
 // The Leaflet map can't run in jsdom — stub it so the page logic is testable.
+// The last props it received are kept so tests can assert what the map is told.
+const mapProps: { current: Record<string, unknown> | null } = { current: null };
 vi.mock("@/components/InteractiveMap", () => ({
-  InteractiveMap: () => null,
+  InteractiveMap: (props: Record<string, unknown>) => {
+    mapProps.current = props;
+    return null;
+  },
 }));
 
 import Page from "./page";
@@ -110,5 +115,126 @@ describe("home page", () => {
     const scroller = container.querySelector(".list-scroll")!;
     const cards = [...scroller.children].filter((el) => el.classList.contains("card"));
     expect(cards.length).toBe(container.querySelectorAll(".card").length);
+  });
+
+  describe("SHIG review", () => {
+    function button(container: HTMLElement, label: string) {
+      return [...container.querySelectorAll("button")].find(
+        (b) => b.textContent?.trim() === label,
+      ) as HTMLElement | undefined;
+    }
+
+    // SHIG 37/1: no facility has a rating, so a rating sort changes nothing.
+    it("does not offer a rating sort that cannot reorder anything", () => {
+      const { container } = render(<Page />);
+      expect(button(container, "評価")).toBeUndefined();
+    });
+
+    // SHIG 15/56/98: before a real fix the base point is Tokyo Station.
+    it("does not show a fake 現在地 pin before geolocation", () => {
+      render(<Page />);
+      expect(mapProps.current?.showUser).toBe(false);
+    });
+
+    it("says distances are measured from Tokyo Station until located", () => {
+      const { container } = render(<Page />);
+      expect(container.querySelector(".list-distance-note")?.textContent).toContain("東京駅から");
+    });
+
+    it("shows the user pin and says 現在地から once located", () => {
+      const geo = {
+        getCurrentPosition: (ok: (p: GeolocationPosition) => void) =>
+          ok({ coords: { latitude: 35.0, longitude: 135.7 } } as GeolocationPosition),
+      };
+      Object.defineProperty(navigator, "geolocation", { value: geo, configurable: true });
+      const { container } = render(<Page />);
+      fireEvent.click(button(container, "現在地から探す")!);
+      expect(mapProps.current?.showUser).toBe(true);
+      expect(container.querySelector(".list-distance-note")?.textContent).toContain("現在地から");
+      Reflect.deleteProperty(navigator, "geolocation");
+    });
+
+    // SHIG 55/60: the empty state offers a way out.
+    it("clears every condition from the empty state", () => {
+      const { container } = render(<Page />);
+      fireEvent.click(typeChip(container, "パルクール"));
+      const input = container.querySelector(".search input") as HTMLInputElement;
+      fireEvent.change(input, { target: { value: "zzz-no-such-facility" } });
+      expect(container.querySelectorAll(".card")).toHaveLength(0);
+      fireEvent.click(button(container, "条件をすべて解除")!);
+      expect(input.value).toBe("");
+      expect(container.querySelectorAll(".card")).toHaveLength(99);
+    });
+
+    // SHIG 60: Esc is an escape hatch from the (full-screen on phones) panel.
+    it("closes the detail panel with Escape", () => {
+      window.history.replaceState(null, "", "/?f=f01");
+      const { container } = render(<Page />);
+      expect(container.querySelector(".detail")).not.toBeNull();
+      fireEvent.keyDown(window, { key: "Escape" });
+      expect(container.querySelector(".detail")).toBeNull();
+    });
+
+    // Esc in the search box clears the box (native), not the open panel.
+    it("keeps the panel open when Escape is pressed in the search box", () => {
+      window.history.replaceState(null, "", "/?f=f01");
+      const { container } = render(<Page />);
+      const input = container.querySelector(".search input") as HTMLInputElement;
+      fireEvent.keyDown(input, { key: "Escape" });
+      expect(container.querySelector(".detail")).not.toBeNull();
+    });
+
+    // SHIG 94: closing from inside the panel returns focus to its card.
+    it.each([
+      ["the close button", (c: HTMLElement) => fireEvent.click(c.querySelector(".detail-close")!)],
+      ["Escape", () => fireEvent.keyDown(window, { key: "Escape" })],
+    ])("returns focus to the facility card when closed with %s", async (_, close) => {
+      window.history.replaceState(null, "", "/?f=f01");
+      const { container } = render(<Page />);
+      (container.querySelector(".detail-close") as HTMLElement).focus();
+      close(container);
+      expect(container.querySelector(".detail")).toBeNull();
+      await new Promise((r) => setTimeout(r, 0));
+      expect(document.activeElement?.getAttribute("data-facility-id")).toBe("f01");
+    });
+
+    // SHIG 94/96: toggle state is exposed, not only colour.
+    it("exposes chip and sort state with aria-pressed", () => {
+      const { container } = render(<Page />);
+      expect(typeChip(container, "すべて").getAttribute("aria-pressed")).toBe("true");
+      expect(typeChip(container, "パルクール").getAttribute("aria-pressed")).toBe("false");
+      expect(button(container, "距離")!.getAttribute("aria-pressed")).toBe("true");
+      const eq = container.querySelector(".eq-chip") as HTMLElement;
+      expect(eq.getAttribute("aria-pressed")).toBe("false");
+      fireEvent.click(eq);
+      expect(eq.getAttribute("aria-pressed")).toBe("true");
+    });
+
+    it("labels the search box", () => {
+      const { container } = render(<Page />);
+      expect(container.querySelector(".search input")?.getAttribute("aria-label")).toBeTruthy();
+    });
+  
+    // SHIG 37/12: a saved favourite is findable again from the list.
+    it("filters to favourites and marks favourite cards", () => {
+      localStorage.clear();
+      window.history.replaceState(null, "", "/?f=f01");
+      const { container } = render(<Page />);
+      fireEvent.click(container.querySelector(".detail-cta .fav-btn") as HTMLElement);
+      expect(container.querySelectorAll(".card .card-fav")).toHaveLength(1);
+      const favChip = container.querySelector(".fav-chip") as HTMLElement;
+      expect(favChip.textContent).toContain("1");
+      fireEvent.click(favChip);
+      expect(favChip.getAttribute("aria-pressed")).toBe("true");
+      expect(container.querySelectorAll(".card")).toHaveLength(1);
+      expect(localStorage.getItem("acro-finder:favorites")).toBe('["f01"]');
+    });
+
+    it("restores favourites saved in an earlier visit", () => {
+      localStorage.setItem("acro-finder:favorites", '["f02","f03"]');
+      const { container } = render(<Page />);
+      expect(container.querySelectorAll(".card .card-fav")).toHaveLength(2);
+      localStorage.clear();
+    });
   });
 });

@@ -1,14 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import type { Facility } from "@/lib/types";
 import { EQUIPMENT_FILTERS } from "@/lib/data";
-import { formatDistance } from "@/lib/util";
+import { formatDistance, hasValue, telHref } from "@/lib/util";
 import { Photo, Star } from "./Photo";
 import { StatusPill } from "./StatusPill";
 import { HoursTable } from "./HoursTable";
-
-const FAV_KEY = "acro-finder:favorites";
 
 const PAYMENT_META: Record<string, { icon: string; class: string }> = {
   現金: { icon: "¥", class: "pay-cash" },
@@ -23,43 +20,23 @@ const PAYMENT_META: Record<string, { icon: string; class: string }> = {
 interface Props {
   facility: Facility | null;
   onClose: () => void;
+  /** Favourites live in the page so the list can filter by them (SHIG 37). */
+  favorite?: boolean;
+  onToggleFavorite?: () => void;
+  /** Whether distances are measured from a real location (else Tokyo Station). */
+  located?: boolean;
 }
 
-export function DetailPanel({ facility, onClose }: Props) {
-  const [favorites, setFavorites] = useState<string[]>([]);
-
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(FAV_KEY);
-      if (raw) setFavorites(JSON.parse(raw) as string[]);
-    } catch {
-      /* localStorage unavailable */
-    }
-  }, []);
-
+export function DetailPanel({ facility, onClose, favorite = false, onToggleFavorite, located = false }: Props) {
   if (!facility) return null;
   const { links } = facility;
-  const isFavorite = favorites.includes(facility.id);
-  const toggleFavorite = () => {
-    setFavorites((prev) => {
-      const next = prev.includes(facility.id)
-        ? prev.filter((id) => id !== facility.id)
-        : [...prev, facility.id];
-      try {
-        localStorage.setItem(FAV_KEY, JSON.stringify(next));
-      } catch {
-        /* localStorage unavailable */
-      }
-      return next;
-    });
-  };
   const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${facility.lat},${facility.lng}`;
   return (
     <aside className="detail open">
       <div className="detail-hero">
         <Photo data={facility.photos[0]} src={facility.image} type={facility.type} />
         <div className="detail-hero-overlay" />
-        <button className="detail-close" onClick={onClose}>
+        <button className="detail-close" onClick={onClose} aria-label="閉じる" title="閉じる (Esc)">
           ✕
         </button>
         <div className="detail-hero-content">
@@ -100,19 +77,6 @@ export function DetailPanel({ facility, onClose }: Props) {
 
         <section className="detail-section">
           <h4 className="detail-section-title">
-            Photos <span className="jp">施設内</span>
-          </h4>
-          <div className="photo-grid">
-            {facility.photos.map((p, i) => (
-              <div key={i}>
-                <Photo data={p} />
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="detail-section">
-          <h4 className="detail-section-title">
             Info <span className="jp">基本情報</span>
           </h4>
           <div className="info-grid">
@@ -122,13 +86,15 @@ export function DetailPanel({ facility, onClose }: Props) {
                 {facility.address}
               </div>
               <div className="sub" style={{ marginTop: 4, fontFamily: "var(--font-en)" }}>
-                距離 {formatDistance(facility.distance)}
+                {located ? "現在地から" : "東京駅から"} {formatDistance(facility.distance)}
               </div>
             </div>
             {facility.phone && (
               <div className="info-cell">
                 <div className="k">Phone / 電話</div>
-                <div className="v mono">{facility.phone}</div>
+                <a className="v mono tel-link" href={telHref(facility.phone)}>
+                  {facility.phone}
+                </a>
               </div>
             )}
             {facility.price && (
@@ -208,10 +174,12 @@ export function DetailPanel({ facility, onClose }: Props) {
                 ))}
               </div>
               <div className="lesson-meta">
-                <div className="lesson-meta-cell">
-                  <div className="k">開催スケジュール</div>
-                  <div className="v">{facility.lessons.schedule}</div>
-                </div>
+                {hasValue(facility.lessons.schedule) && (
+                  <div className="lesson-meta-cell">
+                    <div className="k">開催スケジュール</div>
+                    <div className="v">{facility.lessons.schedule}</div>
+                  </div>
+                )}
                 <div className="lesson-meta-cell">
                   <div className="k">料金</div>
                   <div className="v mono">{facility.lessons.price}</div>
@@ -239,10 +207,12 @@ export function DetailPanel({ facility, onClose }: Props) {
               <div className="k">ウォークイン</div>
               <div className="v">{facility.booking.walkIn ? "可能" : "不可（要予約）"}</div>
             </div>
-            <div className="info-cell">
-              <div className="k">予約期限</div>
-              <div className="v">{facility.booking.leadTime}</div>
-            </div>
+            {hasValue(facility.booking.leadTime) && (
+              <div className="info-cell">
+                <div className="k">予約期限</div>
+                <div className="v">{facility.booking.leadTime}</div>
+              </div>
+            )}
             <div className="info-cell" style={{ gridColumn: "span 2" }}>
               <div className="k">予約方法</div>
               <div className="method-list">
@@ -376,26 +346,23 @@ export function DetailPanel({ facility, onClose }: Props) {
         </p>
 
         <div className="detail-cta">
-          {links.web ? (
+          {links.web && (
             <a className="btn-primary btn" href={links.web} target="_blank" rel="noreferrer">
-              予約する
+              公式サイトで予約
             </a>
-          ) : (
-            <button className="btn-primary btn" disabled>
-              予約する
-            </button>
           )}
           <a className="btn" href={directionsUrl} target="_blank" rel="noreferrer">
             経路を見る
           </a>
           <button
-            className="btn"
-            onClick={toggleFavorite}
-            aria-pressed={isFavorite}
-            title={isFavorite ? "お気に入りから外す" : "お気に入りに追加"}
-            style={isFavorite ? { color: "var(--accent)", borderColor: "var(--accent)" } : undefined}
+            className="btn fav-btn"
+            onClick={onToggleFavorite}
+            aria-pressed={favorite}
+            aria-label="お気に入り"
+            title={favorite ? "お気に入りから外す" : "お気に入りに追加"}
+            style={favorite ? { color: "var(--accent)", borderColor: "var(--accent)" } : undefined}
           >
-            {isFavorite ? "★" : "☆"}
+            {favorite ? "★" : "☆"}
           </button>
         </div>
       </div>

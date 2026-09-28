@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { TopNav } from "./TopNav";
 import { SKILLS, SKILL_GENRES, type Skill, type SkillGenre } from "@/lib/skills-data";
 import { SkillArt } from "./SkillArt";
 import { SkillGraph } from "./SkillGraph";
@@ -58,6 +59,8 @@ export function SkillsApp() {
   const [showFavOnly, setShowFavOnly] = useState(false);
   const [showDoneOnly, setShowDoneOnly] = useState(false);
   const [comboCollapsed, setComboCollapsed] = useState(false);
+  // The combo as it was right before "クリア", kept so the clear can be undone.
+  const [clearedCombo, setClearedCombo] = useState<string[] | null>(null);
 
   const [favs, setFavs] = useState<Set<string>>(() => new Set());
   const [dones, setDones] = useState<Set<string>>(() => new Set());
@@ -69,6 +72,9 @@ export function SkillsApp() {
     setFavs(loadSet("acro_skill_favs"));
     setDones(loadSet("acro_skill_dones"));
     setCombo(loadArr("acro_skill_combo"));
+    // On a phone the expanded builder covers a third of the screen; start it
+    // folded there so the skill list is what you see first (SHIG 82).
+    if (window.matchMedia?.("(max-width: 720px)").matches) setComboCollapsed(true);
     loaded.current = true;
   }, []);
   useEffect(() => {
@@ -150,35 +156,35 @@ export function SkillsApp() {
       else n.add(id);
       return n;
     });
-  const addToCombo = (id: string) =>
+  const addToCombo = (id: string) => {
+    setClearedCombo(null);
     setCombo((prev) => (prev.length >= COMBO_MAX ? prev : [...prev, id]));
+  };
   const removeFromCombo = (idx: number) =>
     setCombo((prev) => prev.filter((_, i) => i !== idx));
+  // Clear at once, offer undo instead of asking first (SHIG 57, 54).
+  const clearCombo = () => {
+    setClearedCombo(combo);
+    setCombo([]);
+  };
+  const undoClear = () => {
+    if (clearedCombo) setCombo(clearedCombo);
+    setClearedCombo(null);
+  };
 
   const selected = selectedId ? byId[selectedId] : null;
 
   return (
     <div className="skills-app">
       <header className="topbar">
-        <div className="brand">
+        <Link href="/" className="brand" aria-label="ACRO/FINDER ホーム">
           <div className="brand-mark">A</div>
           <div>
             ACRO<span style={{ color: "var(--ink-3)" }}>/</span>FINDER
             <div className="jp">アクロバット練習施設</div>
           </div>
-        </div>
-        <nav className="top-nav">
-          <Link href="/" className="top-nav-link">
-            <span className="top-nav-icon">▣</span>施設マップ
-          </Link>
-          <Link href="/events" className="top-nav-link">
-            <span className="top-nav-icon">◈</span>イベント
-          </Link>
-          <span className="top-nav-link active">
-            <span className="top-nav-icon">◆</span>技ガイド
-            <span className="top-nav-badge">{SKILLS.length}</span>
-          </span>
-        </nav>
+        </Link>
+        <TopNav active="skills" badges={{ skills: SKILLS.length }} />
         <div className="search">
           <span className="search-icon">⌕</span>
           <input
@@ -191,12 +197,14 @@ export function SkillsApp() {
         <div className="topbar-actions">
           <button
             className={`btn${showFavOnly ? " btn-primary" : ""}`}
+            aria-pressed={showFavOnly}
             onClick={() => setShowFavOnly((v) => !v)}
           >
             ★ お気に入り {favs.size}
           </button>
           <button
             className={`btn${showDoneOnly ? " btn-primary" : ""}`}
+            aria-pressed={showDoneOnly}
             onClick={() => setShowDoneOnly((v) => !v)}
           >
             ✓ 習得済み {dones.size}
@@ -286,7 +294,8 @@ export function SkillsApp() {
         collapsed={comboCollapsed}
         setCollapsed={setComboCollapsed}
         onRemove={removeFromCombo}
-        onClear={() => setCombo([])}
+        onClear={clearCombo}
+        onUndoClear={clearedCombo ? undoClear : undefined}
       />
     </div>
   );
@@ -467,7 +476,21 @@ function SkillCard({
   onDone: () => void;
 }) {
   return (
-    <div className={`skl-card${selected ? " active" : ""}`} onClick={onClick}>
+    <div
+      className={`skl-card${selected ? " active" : ""}`}
+      onClick={onClick}
+      role="button"
+      tabIndex={0}
+      aria-label={`${skill.name_ja}（Lv.${skill.lv}）の詳細を開く`}
+      onKeyDown={(e) => {
+        // Only the card itself: Enter on the inner ★/✓ buttons is theirs.
+        if (e.target !== e.currentTarget) return;
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick();
+        }
+      }}
+    >
       <div className="skl-card-media">
         <SkillArt skill={skill} />
         <div className="skl-card-id">{skill.id}</div>
@@ -695,6 +718,7 @@ function ComboDock({
   setCollapsed,
   onRemove,
   onClear,
+  onUndoClear,
 }: {
   combo: string[];
   byId: Record<string, Skill>;
@@ -702,8 +726,17 @@ function ComboDock({
   setCollapsed: (v: boolean) => void;
   onRemove: (idx: number) => void;
   onClear: () => void;
+  /** Present only right after a clear; renders the undo notice. */
+  onUndoClear?: () => void;
 }) {
   const totalLv = combo.reduce((sum, id) => sum + (byId[id]?.lv || 0), 0);
+  // "クリア" disables itself once the combo is empty, which would drop keyboard
+  // focus on <body>; move it to the undo button that replaces the slots.
+  const undoRef = useRef<HTMLButtonElement>(null);
+  const canUndo = !!onUndoClear;
+  useEffect(() => {
+    if (canUndo) undoRef.current?.focus();
+  }, [canUndo]);
 
   return (
     <div className={`skl-combo${collapsed ? " collapsed" : ""}`}>
@@ -722,7 +755,14 @@ function ComboDock({
       {!collapsed && (
         <>
           <div className="skl-combo-strip">
-            {combo.length === 0 ? (
+            {combo.length === 0 && onUndoClear ? (
+              <div className="skl-combo-empty skl-combo-undo" role="status">
+                コンボをクリアしました
+                <button className="btn" onClick={onUndoClear} ref={undoRef}>
+                  元に戻す
+                </button>
+              </div>
+            ) : combo.length === 0 ? (
               <div className="skl-combo-empty">— カードや詳細から技を追加できます —</div>
             ) : (
               combo.map((id, idx) => {

@@ -10,12 +10,13 @@ import {
   ViewTransition,
 } from "react";
 import dynamic from "next/dynamic";
-import Link from "next/link";
+import { TopNav } from "@/components/TopNav";
 import { EQUIPMENT_FILTERS, FACILITIES, TYPE_FILTERS } from "@/lib/data";
 import { EVENTS } from "@/lib/events-data";
 import type { SortKey } from "@/lib/types";
 import { PREFECTURES, type Prefecture } from "@/lib/prefectures";
 import { haversineKm, normalizeForSearch, priceValue } from "@/lib/util";
+import { loadFavorites, saveFavorites, toggleFavorite } from "@/lib/favorites";
 
 const EVENT_COUNT = EVENTS.length;
 import { FacilityCard } from "@/components/FacilityCard";
@@ -33,17 +34,42 @@ const DEFAULT_POS = { lat: 35.681, lng: 139.767 };
 
 type GeoState = "idle" | "locating" | "active" | "error";
 
+function isTextEntry(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  return target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName);
+}
+
+function focusIsInDetail(): boolean {
+  return !!document.activeElement?.closest(".detail");
+}
+
+// The panel unmounts on close; focus the card once React has committed that.
+function focusCardAfterRender(id: string) {
+  setTimeout(() => {
+    document.querySelector<HTMLElement>(`.card[data-facility-id="${id}"]`)?.focus();
+  }, 0);
+}
+
+const SORT_OPTIONS: { key: SortKey; label: string }[] = [
+  { key: "distance", label: "距離" },
+  { key: "price", label: "料金" },
+];
+
 export default function Page() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [equipFilters, setEquipFilters] = useState<string[]>([]);
   const [sort, setSort] = useState<SortKey>("distance");
-  const [showUser, setShowUser] = useState(true);
   const [userPos, setUserPos] = useState(DEFAULT_POS);
   const [geoState, setGeoState] = useState<GeoState>("idle");
   const [geoMessage, setGeoMessage] = useState("");
   const [focusPref, setFocusPref] = useState<Prefecture | null>(null);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  const [favOnly, setFavOnly] = useState(false);
+  // The user pin is only drawn for a real fix — before that the base point is
+  // Tokyo Station, and a pin labelled 現在地 there would be a false statement.
+  const located = geoState === "active";
 
   // Keep the search box responsive: typing updates `query` immediately, while
   // the expensive filter + marker diff run against the deferred value.
@@ -61,6 +87,7 @@ export default function Page() {
   const filtered = useMemo(() => {
     const list = facilities.filter((f) => {
       if (typeFilter !== "all" && f.type !== typeFilter) return false;
+      if (favOnly && !favorites.includes(f.id)) return false;
       if (deferredQuery) {
         const q = normalizeForSearch(deferredQuery);
         const equip = f.equipment ?? [];
@@ -77,10 +104,9 @@ export default function Page() {
       return true;
     });
     if (sort === "distance") list.sort((a, b) => a.distance - b.distance);
-    if (sort === "rating") list.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
     if (sort === "price") list.sort((a, b) => priceValue(a.price) - priceValue(b.price));
     return list;
-  }, [facilities, deferredQuery, typeFilter, equipFilters, sort]);
+  }, [facilities, deferredQuery, typeFilter, equipFilters, sort, favOnly, favorites]);
 
   const activeFacility = useMemo(
     () => facilities.find((f) => f.id === activeId) ?? null,
@@ -97,6 +123,9 @@ export default function Page() {
     const f = sp.get("f");
     if (q) setQuery(q);
     if (f && FACILITIES.some((x) => x.id === f)) setActiveId(f);
+    // Favourites are read here too (not in a useState initializer) so the
+    // server-rendered HTML and the first client render agree.
+    setFavorites(loadFavorites());
   }, []);
 
   // Keep the URL in sync with the current view. The first run is skipped so the
@@ -139,6 +168,46 @@ export default function Page() {
     startTransition(() => setEquipFilters([]));
   };
 
+  const clearAll = () => {
+    setQuery("");
+    startTransition(() => {
+      setTypeFilter("all");
+      setEquipFilters([]);
+      setFavOnly(false);
+    });
+  };
+
+  const toggleFav = (id: string) => {
+    setFavorites((prev) => {
+      const next = toggleFavorite(prev, id);
+      saveFavorites(next);
+      return next;
+    });
+  };
+
+  // Close the detail panel. When focus was inside it (keyboard users), hand it
+  // back to the facility's card instead of dropping it on <body> (SHIG 94).
+  const closeDetail = (id: string | null) => {
+    const refocus = focusIsInDetail();
+    setActiveId(null);
+    if (refocus && id) focusCardAfterRender(id);
+  };
+
+  // Esc closes the detail panel, which covers the whole screen on phones. In a
+  // text field Esc belongs to the field (a search box clears itself), so the
+  // panel stays open there.
+  useEffect(() => {
+    if (!activeId) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape" || isTextEntry(e.target)) return;
+      const refocus = focusIsInDetail();
+      setActiveId(null);
+      if (refocus) focusCardAfterRender(activeId);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [activeId]);
+
   const requestGeolocation = () => {
     if (geoState === "locating") return;
     if (typeof navigator === "undefined" || !navigator.geolocation) {
@@ -152,7 +221,6 @@ export default function Page() {
       (pos) => {
         setUserPos({ lat: pos.coords.latitude, lng: pos.coords.longitude });
         setGeoState("active");
-        setShowUser(true);
         setSort("distance");
       },
       (err) => {
@@ -174,7 +242,7 @@ export default function Page() {
       ? "var(--warn)"
       : geoState === "error"
         ? "var(--danger)"
-        : showUser
+        : located
           ? "oklch(0.7 0.2 240)"
           : "var(--ink-4)";
   const dotGlow =
@@ -182,7 +250,7 @@ export default function Page() {
       ? "0 0 6px var(--warn)"
       : geoState === "error"
         ? "0 0 6px var(--danger)"
-        : showUser
+        : located
           ? "0 0 6px oklch(0.7 0.2 240)"
           : "none";
 
@@ -196,25 +264,12 @@ export default function Page() {
             <div className="jp">アクロバット練習施設</div>
           </div>
         </div>
-        <nav className="top-nav">
-          <span className="top-nav-link active">
-            <span className="top-nav-icon">▣</span>施設マップ
-          </span>
-          <Link href="/facilities" className="top-nav-link">
-            <span className="top-nav-icon">▤</span>施設一覧
-          </Link>
-          <Link href="/events" className="top-nav-link">
-            <span className="top-nav-icon">◈</span>イベント
-            <span className="top-nav-badge">{EVENT_COUNT}</span>
-          </Link>
-          <Link href="/skills" className="top-nav-link">
-            <span className="top-nav-icon">◆</span>技ガイド
-          </Link>
-        </nav>
+        <TopNav active="map" badges={{ events: EVENT_COUNT }} />
         <div className="search">
           <span className="search-icon">⌕</span>
           <input
-            type="text"
+            type="search"
+            aria-label="施設を検索"
             placeholder="施設名・エリア・器具で検索  (例: トランポリン、渋谷)"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -236,8 +291,11 @@ export default function Page() {
           ))}
         </select>
         <div className="topbar-actions">
-          {geoState === "error" && <span className="geo-error">{geoMessage}</span>}
-          {geoState === "active" && <span className="geo-ok">現在地を取得しました</span>}
+          {/* Kept mounted so screen readers announce the result when it appears. */}
+          <span className="geo-status" role="status">
+            {geoState === "error" && <span className="geo-error">{geoMessage}</span>}
+            {geoState === "active" && <span className="geo-ok">現在地を取得しました</span>}
+          </span>
           <button
             className="btn"
             onClick={requestGeolocation}
@@ -257,46 +315,53 @@ export default function Page() {
               <div className="list-count">
                 <strong>{filtered.length}</strong>件の施設
               </div>
-              <div className="sort-toggle">
-                <button
-                  className={sort === "distance" ? "active" : ""}
-                  onClick={() => selectSort("distance")}
-                >
-                  距離
-                </button>
-                <button
-                  className={sort === "rating" ? "active" : ""}
-                  onClick={() => selectSort("rating")}
-                >
-                  評価
-                </button>
-                <button
-                  className={sort === "price" ? "active" : ""}
-                  onClick={() => selectSort("price")}
-                >
-                  料金
-                </button>
+              <div className="sort-toggle" role="group" aria-label="並び順">
+                {SORT_OPTIONS.map((o) => (
+                  <button
+                    key={o.key}
+                    className={sort === o.key ? "active" : ""}
+                    aria-pressed={sort === o.key}
+                    onClick={() => selectSort(o.key)}
+                  >
+                    {o.label}
+                  </button>
+                ))}
               </div>
             </div>
+            <p className="list-distance-note">
+              {located
+                ? "距離は現在地からの直線距離です"
+                : "距離は東京駅からの直線距離です（「現在地から探す」で切り替え）"}
+            </p>
             <div className="type-filters">
               {TYPE_FILTERS.map((tf) => (
                 <button
                   key={tf.key}
                   className={`chip ${typeFilter === tf.key ? "active" : ""}`}
+                  aria-pressed={typeFilter === tf.key}
                   onClick={() => selectType(tf.key)}
                 >
                   {tf.label}
                 </button>
               ))}
+              <button
+                className={`chip fav-chip ${favOnly ? "active" : ""}`}
+                aria-pressed={favOnly}
+                onClick={() => startTransition(() => setFavOnly((v) => !v))}
+                title="詳細パネルの ☆ で追加した施設だけを表示します"
+              >
+                <span aria-hidden>★</span> お気に入り {favorites.length}
+              </button>
             </div>
           </div>
           <div className="list-scroll">
             {filtered.length === 0 ? (
               <div className="empty">
-                条件に合う施設が見つかりませんでした
-                <br />
-                <br />
-                フィルターを調整してください
+                <p>条件に合う施設が見つかりませんでした。</p>
+                <p>キーワードを短くするか、種別・器具の絞り込みを外すと見つかることがあります。</p>
+                <button className="btn" onClick={clearAll}>
+                  条件をすべて解除
+                </button>
               </div>
             ) : (
               filtered.map((f) => (
@@ -309,6 +374,7 @@ export default function Page() {
                   <FacilityCard
                     facility={f}
                     active={activeId === f.id}
+                    favorite={favorites.includes(f.id)}
                     onClick={() => setActiveId(f.id)}
                   />
                 </ViewTransition>
@@ -323,8 +389,7 @@ export default function Page() {
             activeId={activeId}
             onSelect={setActiveId}
             userPos={userPos}
-            showUser={showUser}
-            onRecenter={() => setShowUser(true)}
+            showUser={located}
             focusPref={focusPref}
           />
 
@@ -335,9 +400,12 @@ export default function Page() {
                 <button
                   key={eq.key}
                   className={`eq-chip ${equipFilters.includes(eq.key) ? "active" : ""}`}
+                  aria-pressed={equipFilters.includes(eq.key)}
                   onClick={() => toggleEquip(eq.key)}
                 >
-                  <span className="icon">{eq.icon}</span>
+                  <span className="icon" aria-hidden>
+                    {eq.icon}
+                  </span>
                   {eq.key}
                 </button>
               ))}
@@ -356,7 +424,7 @@ export default function Page() {
           <div className="map-legend">
             <span className="swatch">施設</span>
             <span className="swatch active">選択中</span>
-            <span className="swatch you">現在地</span>
+            {located && <span className="swatch you">現在地</span>}
             <span style={{ color: "var(--ink-4)", fontFamily: "var(--font-mono)", fontSize: 10 }}>
               ·
             </span>
@@ -365,7 +433,13 @@ export default function Page() {
             </span>
           </div>
 
-          <DetailPanel facility={activeFacility} onClose={() => setActiveId(null)} />
+          <DetailPanel
+            facility={activeFacility}
+            onClose={() => closeDetail(activeId)}
+            favorite={!!activeId && favorites.includes(activeId)}
+            onToggleFavorite={() => activeId && toggleFav(activeId)}
+            located={located}
+          />
         </main>
       </div>
     </div>

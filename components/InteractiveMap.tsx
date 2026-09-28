@@ -20,7 +20,6 @@ interface Props {
   onSelect: (id: string) => void;
   userPos: { lat: number; lng: number };
   showUser: boolean;
-  onRecenter?: () => void;
   focusPref?: { lat: number; lng: number } | null;
 }
 
@@ -44,7 +43,6 @@ export function InteractiveMap({
   onSelect,
   userPos,
   showUser,
-  onRecenter,
   focusPref,
 }: Props) {
   const mapElRef = useRef<HTMLDivElement>(null);
@@ -153,6 +151,30 @@ export function InteractiveMap({
     if (fresh.length) cluster.addLayers(fresh);
   }, [facilities]);
 
+  // Bring the selected facility into view (SHIG 66): a card picked in the list,
+  // or a `?f=` deep link from a facility page, should show its pin — opening a
+  // cluster if needed — instead of leaving the map where it was.
+  useEffect(() => {
+    if (!activeId) return;
+    const entry = markersRef.current.get(activeId);
+    const cluster = clusterRef.current;
+    if (!entry || !cluster) return;
+    cluster.zoomToShowLayer(entry.marker, () => {
+      const map = mapRef.current;
+      if (!map) return;
+      // On wide screens the detail panel covers the right side of the map, so
+      // centre the pin in the part that stays visible.
+      const panel = document.querySelector(".detail");
+      const offset = panel && window.innerWidth > 720 ? panel.getBoundingClientRect().width / 2 : 0;
+      const target = map.containerPointToLatLng(
+        map.latLngToContainerPoint(entry.marker.getLatLng()).add([offset, 0]),
+      );
+      map.panTo(target, { animate: true });
+    });
+    // Only a new selection should move the map — not every keystroke that
+    // re-filters the list while a facility stays selected.
+  }, [activeId]);
+
   // Highlight the active marker.
   useEffect(() => {
     markersRef.current.forEach((entry, id) => {
@@ -220,7 +242,6 @@ export function InteractiveMap({
 
   const handleRecenter = () => {
     mapRef.current?.fitBounds(JAPAN_BOUNDS);
-    onRecenter?.();
   };
 
   return (
@@ -230,6 +251,7 @@ export function InteractiveMap({
         <button
           className="map-ctrl-btn"
           title="拡大"
+          aria-label="拡大"
           onClick={() => mapRef.current?.zoomIn()}
         >
           ＋
@@ -237,11 +259,17 @@ export function InteractiveMap({
         <button
           className="map-ctrl-btn"
           title="縮小"
+          aria-label="縮小"
           onClick={() => mapRef.current?.zoomOut()}
         >
           −
         </button>
-        <button className="map-ctrl-btn" title="日本全体を表示" onClick={handleRecenter}>
+        <button
+          className="map-ctrl-btn"
+          title="日本全体を表示"
+          aria-label="日本全体を表示"
+          onClick={handleRecenter}
+        >
           ◎
         </button>
       </div>

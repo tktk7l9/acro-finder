@@ -2,8 +2,9 @@
 
 import { useMemo, useState, type CSSProperties } from "react";
 import Link from "next/link";
+import { TopNav } from "./TopNav";
 import { EVENT_TYPES, EVENTS, eventStatus } from "@/lib/events-data";
-import { fmtEventDate, todayJst } from "@/lib/util";
+import { fmtEventDate, normalizeForSearch, todayJst } from "@/lib/util";
 import { EventCard } from "./EventCard";
 import { FeaturedEvent } from "./FeaturedEvent";
 
@@ -30,9 +31,10 @@ export function EventsFeed() {
       if (statusFilter === "open" && st === "past") return false;
       if (statusFilter === "past" && st !== "past") return false;
       if (query) {
-        const q = query.toLowerCase();
-        const hay =
-          `${e.title} ${e.titleJa} ${e.description} ${e.venue ?? ""} ${(e.tags ?? []).join(" ")}`.toLowerCase();
+        const q = normalizeForSearch(query.trim());
+        const hay = normalizeForSearch(
+          `${e.title} ${e.titleJa} ${e.description} ${e.venue ?? ""} ${(e.tags ?? []).join(" ")}`,
+        );
         if (!hay.includes(q)) return false;
       }
       return true;
@@ -74,6 +76,12 @@ export function EventsFeed() {
     return c;
   }, []);
 
+  const clearAll = () => {
+    setQuery("");
+    setTypeFilter("all");
+    setStatusFilter("all");
+  };
+
   const showFeatured =
     featured &&
     eventStatus(featured, today) !== "past" &&
@@ -84,37 +92,23 @@ export function EventsFeed() {
   return (
     <div className="events-app">
       <header className="topbar">
-        <div className="brand">
+        <Link href="/" className="brand" aria-label="ACRO/FINDER ホーム">
           <div className="brand-mark">A</div>
           <div>
             ACRO<span style={{ color: "var(--ink-3)" }}>/</span>FINDER
             <div className="jp">アクロバット練習施設</div>
           </div>
-        </div>
-        <nav className="top-nav">
-          <Link href="/" className="top-nav-link">
-            <span className="top-nav-icon">▣</span>施設マップ
-          </Link>
-          <span className="top-nav-link active">
-            <span className="top-nav-icon">◈</span>イベント
-            <span className="top-nav-badge">{EVENTS.length}</span>
-          </span>
-          <Link href="/skills" className="top-nav-link">
-            <span className="top-nav-icon">◆</span>技ガイド
-          </Link>
-        </nav>
+        </Link>
+        <TopNav active="events" badges={{ events: EVENTS.length }} />
         <div className="search">
           <span className="search-icon">⌕</span>
           <input
-            type="text"
+            type="search"
+            aria-label="イベントを検索"
             placeholder="大会名・会場・タグで検索"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
-        </div>
-        <div className="topbar-actions">
-          <button className="btn">📅 カレンダー表示</button>
-          <button className="btn-primary btn">＋ イベント主催</button>
         </div>
       </header>
 
@@ -124,9 +118,11 @@ export function EventsFeed() {
             <h4 className="sidebar-title">Status / 状態</h4>
             <div className="filter-list">
               {STATUS_OPTIONS.map((s) => (
-                <div
+                <button
+                  type="button"
                   key={s.key}
                   className={`filter-row ${statusFilter === s.key ? "active" : ""}`}
+                  aria-pressed={statusFilter === s.key}
                   onClick={() => setStatusFilter(s.key)}
                   style={
                     {
@@ -135,7 +131,7 @@ export function EventsFeed() {
                   }
                 >
                   <span className="lbl">{s.label}</span>
-                </div>
+                </button>
               ))}
             </div>
           </div>
@@ -144,15 +140,19 @@ export function EventsFeed() {
             <h4 className="sidebar-title">Type / 種別</h4>
             <div className="filter-list">
               {EVENT_TYPES.map((t) => (
-                <div
+                <button
+                  type="button"
                   key={t.key}
                   className={`filter-row ${typeFilter === t.key ? "active" : ""}`}
+                  aria-pressed={typeFilter === t.key}
+                  // A type with no events can only lead to an empty list (SHIG 13).
+                  disabled={!typeCounts[t.key]}
                   onClick={() => setTypeFilter(t.key)}
                   style={{ "--ind": t.color } as CSSProperties}
                 >
                   <span className="lbl">{t.label}</span>
                   <span className="count">{typeCounts[t.key] || 0}</span>
-                </div>
+                </button>
               ))}
             </div>
           </div>
@@ -213,11 +213,11 @@ export function EventsFeed() {
               >
                 NO EVENTS FOUND
               </div>
-              <div>
-                条件に一致するイベントがありません
-                <br />
-                フィルターを調整してください
-              </div>
+              <p>条件に一致するイベントがありません。</p>
+              <p>キーワードを短くするか、状態・種別の絞り込みを外してみてください。</p>
+              <button className="btn" onClick={clearAll}>
+                条件をすべて解除
+              </button>
             </div>
           )}
 

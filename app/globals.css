@@ -41,6 +41,12 @@ html, body {
   overflow: hidden;
 }
 
+/* One visible keyboard-focus ring for every control (cards are role=button). */
+:where(a, button, select, [role="button"], [tabindex]):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 button {
   font: inherit;
   color: inherit;
@@ -52,6 +58,9 @@ button {
 .app {
   display: grid;
   grid-template-rows: 56px 1fr;
+  /* Without an explicit track the implicit column sizes to min-content, so the
+     topbar's widest row pushed the whole shell past a 390px viewport. */
+  grid-template-columns: minmax(0, 1fr);
   height: 100vh;
 }
 
@@ -70,6 +79,8 @@ button {
   display: flex;
   align-items: center;
   gap: 10px;
+  color: inherit;
+  text-decoration: none;
   font-family: var(--font-en);
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -257,6 +268,25 @@ button {
   align-items: baseline;
   justify-content: space-between;
   margin-bottom: 12px;
+}
+.card-fav {
+  color: var(--accent);
+  font-size: 12px;
+  flex-shrink: 0;
+}
+.tel-link {
+  display: block;
+  /* A tap target of at least 7mm (SHIG 78) without shifting the text. */
+  padding: 5px 0;
+  margin: -5px 0;
+  color: inherit;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+}
+.list-distance-note {
+  margin: -4px 0 10px;
+  font-size: 11px;
+  color: var(--ink-3);
 }
 .list-count {
   font-family: var(--font-en);
@@ -1022,6 +1052,8 @@ button {
   color: var(--ink-3);
   font-size: 13px;
 }
+.empty p { margin: 0 0 10px; line-height: 1.7; }
+.empty .btn { margin-top: 8px; }
 
 /* === Links list (detail panel) === */
 .links-list {
@@ -1287,6 +1319,7 @@ button {
 .events-app {
   display: grid;
   grid-template-rows: 56px 1fr;
+  grid-template-columns: minmax(0, 1fr);
   height: 100vh;
 }
 .events-main {
@@ -1343,6 +1376,9 @@ button {
   color: var(--ink-2);
 }
 .filter-row:hover { background: var(--bg-2); color: var(--ink); }
+.filter-row { width: 100%; text-align: left; }
+.filter-row:disabled { opacity: .45; cursor: default; }
+.filter-row:disabled:hover { background: none; color: var(--ink-2); }
 .filter-row.active {
   background: var(--bg-2);
   color: var(--ink);
@@ -1778,11 +1814,18 @@ button {
 .skills-app {
   display: grid;
   grid-template-rows: 56px auto auto 1fr auto;
+  grid-template-columns: minmax(0, 1fr);
   height: 100vh;
   min-height: 0;
 }
 
 /* ── Genre tab bar ── */
+.skl-combo-undo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
 .skl-genrebar {
   display: flex;
   align-items: stretch;
@@ -2645,7 +2688,10 @@ button {
     scrollbar-width: none;
   }
   .top-nav::-webkit-scrollbar { display: none; }
-  .top-nav-link { white-space: nowrap; flex-shrink: 0; }
+  .top-nav-link { white-space: nowrap; flex-shrink: 0; padding: 6px 10px; }
+  /* Drop the decorative glyphs so all four tabs fit a 390px screen and none
+     (often the current one) hides past the edge (SHIG 59, 76). */
+  .top-nav-icon { display: none; }
 
   .search {
     order: 4;
@@ -2665,9 +2711,23 @@ button {
     margin-left: auto;
     gap: 6px;
   }
-  .app .topbar-actions .geo-ok,
-  .app .topbar-actions .geo-error { display: none; }
+  /* Geolocation feedback stays visible on phones (a denied permission must not
+     fail silently); it drops onto its own line under the button. */
+  .app .topbar-actions { flex-wrap: wrap; justify-content: flex-end; }
+  .app .topbar-actions .geo-status { order: 2; flex-basis: 100%; text-align: right; }
+  .app .topbar-actions .geo-error,
+  .app .topbar-actions .geo-ok { white-space: normal; }
   .app .topbar-actions .btn { padding: 8px 12px; font-size: 12px; }
+  /* Skills: the ★ / ✓ filters are the only way to reach saved skills, so they
+     must not vanish on phones (SHIG 37, 82). */
+  .skills-app .topbar-actions {
+    display: flex;
+    order: 6;
+    flex-basis: 100%;
+    margin-left: 0;
+    gap: 6px;
+  }
+  .skills-app .topbar-actions .btn { flex: 1; justify-content: center; padding: 7px 10px; }
 
   /* Home — map preview on top, the scrolling list fills the rest */
   .main {

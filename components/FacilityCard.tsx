@@ -8,10 +8,11 @@ import { InstagramIcon, TiktokIcon, WebIcon, XIcon, YoutubeIcon } from "./SnsIco
 interface Props {
   facility: Facility;
   active: boolean;
+  favorite?: boolean;
   onClick: () => void;
 }
 
-function FacilityCardImpl({ facility, active, onClick }: Props) {
+function FacilityCardImpl({ facility, active, favorite = false, onClick }: Props) {
   const { links } = facility;
   return (
     <div
@@ -26,6 +27,7 @@ function FacilityCardImpl({ facility, active, onClick }: Props) {
       role="button"
       tabIndex={0}
       aria-current={active || undefined}
+      data-facility-id={facility.id}
     >
       <div className="card-row">
         <div className="card-thumb">
@@ -35,6 +37,11 @@ function FacilityCardImpl({ facility, active, onClick }: Props) {
         <div className="card-body">
           <h3 className="card-title">
             <span className="title-text">{facility.name}</span>
+            {favorite && (
+              <span className="card-fav" role="img" aria-label="お気に入り">
+                ★
+              </span>
+            )}
             {facility.isOpen !== undefined && (
               <StatusPill open={facility.isOpen} closesAt={facility.closesAt ?? ""} />
             )}
@@ -154,5 +161,8 @@ function FacilityCardImpl({ facility, active, onClick }: Props) {
 // re-rendering when an unrelated facility is selected.
 export const FacilityCard = memo(
   FacilityCardImpl,
-  (prev, next) => prev.facility === next.facility && prev.active === next.active,
+  (prev, next) =>
+    prev.facility === next.facility &&
+    prev.active === next.active &&
+    prev.favorite === next.favorite,
 );
