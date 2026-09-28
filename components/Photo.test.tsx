@@ -40,4 +40,22 @@ describe("Photo", () => {
     );
     expect(queryByText("施設A — 写真準備中")).toBeNull();
   });
+
+  // A jimcdn image would otherwise set a third-party __cf_bm cookie.
+  it("loads cookie-setting hosts as anonymous CORS requests", () => {
+    const { container } = render(
+      <Photo
+        data={{ label: "x", color: "ok-lime" }}
+        src="https://image.jimcdn.com/app/cms/image/x.jpg"
+      />,
+    );
+    expect(container.querySelector("img")?.getAttribute("crossorigin")).toBe("anonymous");
+  });
+
+  it("keeps other hosts as plain image requests", () => {
+    const { container } = render(
+      <Photo data={{ label: "x", color: "ok-lime" }} src="https://example.test/x.jpg" />,
+    );
+    expect(container.querySelector("img")?.hasAttribute("crossorigin")).toBe(false);
+  });
 });

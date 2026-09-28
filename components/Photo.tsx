@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { Photo as PhotoData } from "@/lib/types";
+import { imageCrossOrigin } from "@/lib/image-cors";
 
 export function Star() {
   return (
@@ -43,6 +44,8 @@ export function Photo({
           src={src}
           alt={data.label}
           loading="lazy"
+          decoding="async"
+          crossOrigin={imageCrossOrigin(src)}
           onError={() => setErrored(true)}
         />
       ) : (
