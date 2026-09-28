@@ -236,8 +236,11 @@ export default function Page() {
           ))}
         </select>
         <div className="topbar-actions">
-          {geoState === "error" && <span className="geo-error">{geoMessage}</span>}
-          {geoState === "active" && <span className="geo-ok">現在地を取得しました</span>}
+          {/* Kept mounted so screen readers announce the result when it appears. */}
+          <span className="geo-status" role="status">
+            {geoState === "error" && <span className="geo-error">{geoMessage}</span>}
+            {geoState === "active" && <span className="geo-ok">現在地を取得しました</span>}
+          </span>
           <button
             className="btn"
             onClick={requestGeolocation}

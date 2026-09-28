@@ -52,6 +52,9 @@ button {
 .app {
   display: grid;
   grid-template-rows: 56px 1fr;
+  /* Without an explicit track the implicit column sizes to min-content, so the
+     topbar's widest row pushed the whole shell past a 390px viewport. */
+  grid-template-columns: minmax(0, 1fr);
   height: 100vh;
 }
 
@@ -1287,6 +1290,7 @@ button {
 .events-app {
   display: grid;
   grid-template-rows: 56px 1fr;
+  grid-template-columns: minmax(0, 1fr);
   height: 100vh;
 }
 .events-main {
@@ -1778,6 +1782,7 @@ button {
 .skills-app {
   display: grid;
   grid-template-rows: 56px auto auto 1fr auto;
+  grid-template-columns: minmax(0, 1fr);
   height: 100vh;
   min-height: 0;
 }
@@ -2665,8 +2670,12 @@ button {
     margin-left: auto;
     gap: 6px;
   }
-  .app .topbar-actions .geo-ok,
-  .app .topbar-actions .geo-error { display: none; }
+  /* Geolocation feedback stays visible on phones (a denied permission must not
+     fail silently); it drops onto its own line under the button. */
+  .app .topbar-actions { flex-wrap: wrap; justify-content: flex-end; }
+  .app .topbar-actions .geo-status { order: 2; flex-basis: 100%; text-align: right; }
+  .app .topbar-actions .geo-error,
+  .app .topbar-actions .geo-ok { white-space: normal; }
   .app .topbar-actions .btn { padding: 8px 12px; font-size: 12px; }
 
   /* Home — map preview on top, the scrolling list fills the rest */
