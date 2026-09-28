@@ -191,5 +191,27 @@ describe("home page", () => {
       const { container } = render(<Page />);
       expect(container.querySelector(".search input")?.getAttribute("aria-label")).toBeTruthy();
     });
+  
+    // SHIG 37/12: a saved favourite is findable again from the list.
+    it("filters to favourites and marks favourite cards", () => {
+      localStorage.clear();
+      window.history.replaceState(null, "", "/?f=f01");
+      const { container } = render(<Page />);
+      fireEvent.click(container.querySelector(".detail-cta .fav-btn") as HTMLElement);
+      expect(container.querySelectorAll(".card .card-fav")).toHaveLength(1);
+      const favChip = container.querySelector(".fav-chip") as HTMLElement;
+      expect(favChip.textContent).toContain("1");
+      fireEvent.click(favChip);
+      expect(favChip.getAttribute("aria-pressed")).toBe("true");
+      expect(container.querySelectorAll(".card")).toHaveLength(1);
+      expect(localStorage.getItem("acro-finder:favorites")).toBe('["f01"]');
+    });
+
+    it("restores favourites saved in an earlier visit", () => {
+      localStorage.setItem("acro-finder:favorites", '["f02","f03"]');
+      const { container } = render(<Page />);
+      expect(container.querySelectorAll(".card .card-fav")).toHaveLength(2);
+      localStorage.clear();
+    });
   });
 });

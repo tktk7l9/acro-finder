@@ -2,6 +2,17 @@ export function formatDistance(km: number): string {
   return km < 100 ? `${km.toFixed(1)} km` : `${Math.round(km)} km`;
 }
 
+// True when a data field carries real information. The dataset uses "—" as a
+// "not published" placeholder; printing it as a value is noise (SHIG 1).
+export function hasValue(v: string | undefined | null): v is string {
+  return !!v && !/^[\s—\-–]*$/.test(v);
+}
+
+// `tel:` href for a Japanese phone number as written in the data ("03-5879-2291").
+export function telHref(phone: string): string {
+  return `tel:${phone.replace(/[^\d+]/g, "")}`;
+}
+
 // Numeric value of a price string, used for sorting. Only the FIRST amount is
 // taken — strings like "月額 ¥9,800〜 / 入会金 ¥3,000" must not have their
 // digits concatenated into one huge number. Missing/unparseable prices sort last.

@@ -261,6 +261,17 @@ button {
   justify-content: space-between;
   margin-bottom: 12px;
 }
+.card-fav {
+  color: var(--accent);
+  font-size: 12px;
+  flex-shrink: 0;
+}
+.tel-link {
+  display: block;
+  color: inherit;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+}
 .list-distance-note {
   margin: -4px 0 10px;
   font-size: 11px;

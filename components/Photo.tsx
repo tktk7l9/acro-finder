@@ -52,7 +52,9 @@ export function Photo({
               {TYPE_GLYPH[type] ?? "◆"}
             </span>
           )}
-          <div className="photo-label">{data.label}</div>
+          {/* With a glyph the placeholder is decorative; its "〇〇 — 写真準備中"
+              caption would only repeat the name printed beside it (SHIG 1). */}
+          {!type && <div className="photo-label">{data.label}</div>}
         </>
       )}
     </div>

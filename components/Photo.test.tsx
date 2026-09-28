@@ -31,4 +31,13 @@ describe("Photo", () => {
     expect(container.querySelector("img")).toBeTruthy();
     expect(container.querySelector(".photo-glyph")).toBeNull();
   });
+
+  // SHIG 1: the facility name already sits next to the thumbnail, so repeating
+  // "〇〇 — 写真準備中" on every placeholder is noise.
+  it("drops the placeholder caption when the type glyph stands in for the photo", () => {
+    const { queryByText } = render(
+      <Photo data={{ label: "施設A — 写真準備中", color: "ok-slate" }} type="parkour" />,
+    );
+    expect(queryByText("施設A — 写真準備中")).toBeNull();
+  });
 });

@@ -16,6 +16,7 @@ import { EVENTS } from "@/lib/events-data";
 import type { SortKey } from "@/lib/types";
 import { PREFECTURES, type Prefecture } from "@/lib/prefectures";
 import { haversineKm, normalizeForSearch, priceValue } from "@/lib/util";
+import { loadFavorites, saveFavorites, toggleFavorite } from "@/lib/favorites";
 
 const EVENT_COUNT = EVENTS.length;
 import { FacilityCard } from "@/components/FacilityCard";
@@ -48,6 +49,8 @@ export default function Page() {
   const [geoState, setGeoState] = useState<GeoState>("idle");
   const [geoMessage, setGeoMessage] = useState("");
   const [focusPref, setFocusPref] = useState<Prefecture | null>(null);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  const [favOnly, setFavOnly] = useState(false);
   // The user pin is only drawn for a real fix — before that the base point is
   // Tokyo Station, and a pin labelled 現在地 there would be a false statement.
   const located = geoState === "active";
@@ -68,6 +71,7 @@ export default function Page() {
   const filtered = useMemo(() => {
     const list = facilities.filter((f) => {
       if (typeFilter !== "all" && f.type !== typeFilter) return false;
+      if (favOnly && !favorites.includes(f.id)) return false;
       if (deferredQuery) {
         const q = normalizeForSearch(deferredQuery);
         const equip = f.equipment ?? [];
@@ -86,7 +90,7 @@ export default function Page() {
     if (sort === "distance") list.sort((a, b) => a.distance - b.distance);
     if (sort === "price") list.sort((a, b) => priceValue(a.price) - priceValue(b.price));
     return list;
-  }, [facilities, deferredQuery, typeFilter, equipFilters, sort]);
+  }, [facilities, deferredQuery, typeFilter, equipFilters, sort, favOnly, favorites]);
 
   const activeFacility = useMemo(
     () => facilities.find((f) => f.id === activeId) ?? null,
@@ -103,6 +107,9 @@ export default function Page() {
     const f = sp.get("f");
     if (q) setQuery(q);
     if (f && FACILITIES.some((x) => x.id === f)) setActiveId(f);
+    // Favourites are read here too (not in a useState initializer) so the
+    // server-rendered HTML and the first client render agree.
+    setFavorites(loadFavorites());
   }, []);
 
   // Keep the URL in sync with the current view. The first run is skipped so the
@@ -150,6 +157,15 @@ export default function Page() {
     startTransition(() => {
       setTypeFilter("all");
       setEquipFilters([]);
+      setFavOnly(false);
+    });
+  };
+
+  const toggleFav = (id: string) => {
+    setFavorites((prev) => {
+      const next = toggleFavorite(prev, id);
+      saveFavorites(next);
+      return next;
     });
   };
 
@@ -313,6 +329,14 @@ export default function Page() {
                   {tf.label}
                 </button>
               ))}
+              <button
+                className={`chip fav-chip ${favOnly ? "active" : ""}`}
+                aria-pressed={favOnly}
+                onClick={() => startTransition(() => setFavOnly((v) => !v))}
+                title="詳細パネルの ☆ で追加した施設だけを表示します"
+              >
+                <span aria-hidden>★</span> お気に入り {favorites.length}
+              </button>
             </div>
           </div>
           <div className="list-scroll">
@@ -335,6 +359,7 @@ export default function Page() {
                   <FacilityCard
                     facility={f}
                     active={activeId === f.id}
+                    favorite={favorites.includes(f.id)}
                     onClick={() => setActiveId(f.id)}
                   />
                 </ViewTransition>
@@ -393,7 +418,13 @@ export default function Page() {
             </span>
           </div>
 
-          <DetailPanel facility={activeFacility} onClose={() => setActiveId(null)} />
+          <DetailPanel
+            facility={activeFacility}
+            onClose={() => setActiveId(null)}
+            favorite={!!activeId && favorites.includes(activeId)}
+            onToggleFavorite={() => activeId && toggleFav(activeId)}
+            located={located}
+          />
         </main>
       </div>
     </div>

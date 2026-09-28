@@ -1,6 +1,8 @@
 import { describe, it, expect, vi } from "vitest";
 import {
   formatDistance,
+  hasValue,
+  telHref,
   todayLabel,
   fmtEventDate,
   haversineKm,
@@ -110,5 +112,22 @@ describe("haversineKm", () => {
     const d = haversineKm({ lat: 35.68, lng: 139.77 }, { lat: 34.69, lng: 135.5 });
     expect(d).toBeGreaterThan(380);
     expect(d).toBeLessThan(420);
+  });
+});
+
+describe("hasValue", () => {
+  it("treats empty and dash placeholders as missing", () => {
+    expect(hasValue(undefined)).toBe(false);
+    expect(hasValue("")).toBe(false);
+    expect(hasValue("—")).toBe(false);
+    expect(hasValue(" - ")).toBe(false);
+    expect(hasValue("前日まで")).toBe(true);
+  });
+});
+
+describe("telHref", () => {
+  it("strips separators", () => {
+    expect(telHref("03-5879-2291")).toBe("tel:0358792291");
+    expect(telHref("+81 3 1234 5678")).toBe("tel:+81312345678");
   });
 });

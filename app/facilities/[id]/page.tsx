@@ -10,6 +10,7 @@ import { Breadcrumb, type Crumb } from "@/components/Breadcrumb";
 import { FacilityLink } from "@/components/FacilityLink";
 import { JsonLd } from "@/components/JsonLd";
 import { Photo } from "@/components/Photo";
+import { hasValue, telHref } from "@/lib/util";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -78,7 +79,7 @@ export default async function FacilityPage({ params }: Props) {
 
   return (
     <div className="doc-shell">
-      <SiteHeader />
+      <SiteHeader active="facilities" />
       <main className="doc">
         <Breadcrumb items={crumbs} />
         <div className="doc-hero">
@@ -116,7 +117,9 @@ export default async function FacilityPage({ params }: Props) {
             {facility.phone && (
               <div className="info-cell">
                 <div className="k">電話</div>
-                <div className="v mono">{facility.phone}</div>
+                <a className="v mono tel-link" href={telHref(facility.phone)}>
+                  {facility.phone}
+                </a>
               </div>
             )}
             {facility.price && (
@@ -175,10 +178,12 @@ export default async function FacilityPage({ params }: Props) {
                   ))}
                 </div>
                 <div className="lesson-meta">
-                  <div className="lesson-meta-cell">
-                    <div className="k">スケジュール</div>
-                    <div className="v">{facility.lessons.schedule}</div>
-                  </div>
+                  {hasValue(facility.lessons.schedule) && (
+                    <div className="lesson-meta-cell">
+                      <div className="k">スケジュール</div>
+                      <div className="v">{facility.lessons.schedule}</div>
+                    </div>
+                  )}
                   <div className="lesson-meta-cell">
                     <div className="k">料金</div>
                     <div className="v mono">{facility.lessons.price}</div>
@@ -203,10 +208,12 @@ export default async function FacilityPage({ params }: Props) {
                 <div className="k">ウォークイン</div>
                 <div className="v">{facility.booking.walkIn ? "可能" : "不可"}</div>
               </div>
-              <div className="info-cell">
-                <div className="k">予約期限</div>
-                <div className="v">{facility.booking.leadTime}</div>
-              </div>
+              {hasValue(facility.booking.leadTime) && (
+                <div className="info-cell">
+                  <div className="k">予約期限</div>
+                  <div className="v">{facility.booking.leadTime}</div>
+                </div>
+              )}
               <div className="info-cell" style={{ gridColumn: "span 2" }}>
                 <div className="k">予約方法</div>
                 <div className="method-list">

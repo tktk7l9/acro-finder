@@ -5,6 +5,9 @@ import { FACILITIES } from "@/lib/data";
 
 const withHours = FACILITIES.find((f) => f.hours)!; // f03 — has an hours table
 const coreOnly = FACILITIES.find((f) => !f.hours && !f.lessons)!; // a core-only facility
+const noWeb = FACILITIES.find((f) => !f.links.web)!;
+const withPhone = FACILITIES.find((f) => f.phone)!;
+const dashLeadTime = FACILITIES.find((f) => f.booking?.leadTime === "—")!;
 
 describe("DetailPanel", () => {
   it("renders nothing without a facility", () => {
@@ -38,14 +41,74 @@ describe("DetailPanel", () => {
     expect(onClose).toHaveBeenCalledOnce();
   });
 
-  it("toggles the favorite star", () => {
-    localStorage.clear();
-    const { container } = render(<DetailPanel facility={FACILITIES[0]} onClose={() => {}} />);
-    const favBtn = [...container.querySelectorAll(".detail-cta button")].find(
-      (b) => b.textContent === "☆" || b.textContent === "★",
-    ) as HTMLElement;
-    expect(favBtn.textContent).toBe("☆");
+  it("toggles the favorite star through the parent", () => {
+    const onToggle = vi.fn();
+    const { container, rerender } = render(
+      <DetailPanel facility={FACILITIES[0]} onClose={() => {}} onToggleFavorite={onToggle} />,
+    );
+    const favBtn = container.querySelector(".detail-cta .fav-btn") as HTMLElement;
+    expect(favBtn.textContent).toContain("☆");
+    expect(favBtn.getAttribute("aria-pressed")).toBe("false");
     fireEvent.click(favBtn);
-    expect(favBtn.textContent).toBe("★");
+    expect(onToggle).toHaveBeenCalledOnce();
+    rerender(
+      <DetailPanel facility={FACILITIES[0]} onClose={() => {}} favorite onToggleFavorite={onToggle} />,
+    );
+    expect(favBtn.textContent).toContain("★");
+    expect(favBtn.getAttribute("aria-pressed")).toBe("true");
+  });
+
+  describe("SHIG review", () => {
+    it("labels the close button", () => {
+      const { container } = render(<DetailPanel facility={FACILITIES[0]} onClose={() => {}} />);
+      expect(container.querySelector(".detail-close")?.getAttribute("aria-label")).toBe("閉じる");
+    });
+
+    // SHIG 1: photos[] never carries an image, so the section was always a placeholder.
+    it("has no placeholder-only photos section", () => {
+      const { queryByText } = render(<DetailPanel facility={FACILITIES[0]} onClose={() => {}} />);
+      expect(queryByText("施設内")).toBeNull();
+    });
+
+    // SHIG 1: "—" is a placeholder, not information.
+    it("hides booking cells whose value is a dash placeholder", () => {
+      const { queryByText } = render(<DetailPanel facility={dashLeadTime} onClose={() => {}} />);
+      expect(queryByText("予約期限")).toBeNull();
+    });
+
+    // SHIG 47/11: the button opens the facility's own site — say so.
+    it("names the booking link after where it goes", () => {
+      const { getByText, queryByText } = render(
+        <DetailPanel facility={FACILITIES[0]} onClose={() => {}} />,
+      );
+      expect(getByText("公式サイトで予約").closest("a")?.getAttribute("href")).toBe(
+        FACILITIES[0].links.web,
+      );
+      expect(queryByText("予約する")).toBeNull();
+    });
+
+    // SHIG 37: a permanently disabled button with no reason is noise.
+    it("omits the booking button when there is no official site", () => {
+      const { queryByText } = render(<DetailPanel facility={noWeb} onClose={() => {}} />);
+      expect(queryByText("公式サイトで予約")).toBeNull();
+      expect(queryByText("予約する")).toBeNull();
+    });
+
+    // SHIG 22/30: call straight from the panel on a phone.
+    it("makes the phone number a tel: link", () => {
+      const { container } = render(<DetailPanel facility={withPhone} onClose={() => {}} />);
+      const tel = container.querySelector('a[href^="tel:"]');
+      expect(tel?.getAttribute("href")).toBe(`tel:${withPhone.phone!.replace(/[^\d+]/g, "")}`);
+    });
+
+    // SHIG 56/28: the distance base point is stated.
+    it("states where the distance is measured from", () => {
+      const { container, rerender } = render(
+        <DetailPanel facility={FACILITIES[0]} onClose={() => {}} />,
+      );
+      expect(container.textContent).toContain("東京駅から");
+      rerender(<DetailPanel facility={FACILITIES[0]} onClose={() => {}} located />);
+      expect(container.textContent).toContain("現在地から");
+    });
   });
 });
