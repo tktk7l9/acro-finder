@@ -54,4 +54,50 @@ describe("EventsFeed", () => {
     expect(getAllByText("All Japan XTC 2026").length).toBeGreaterThan(0);
     expect(queryByText("NO EVENTS FOUND")).toBeNull();
   });
+
+  describe("SHIG review", () => {
+    // SHIG 37: buttons without a handler.
+    it("has no dead calendar / organiser buttons", () => {
+      const { queryByText } = render(<EventsFeed />);
+      expect(queryByText(/カレンダー表示/)).toBeNull();
+      expect(queryByText(/イベント主催/)).toBeNull();
+    });
+
+    // SHIG 94: filters are real buttons that expose their state.
+    it("renders filters as pressed-state buttons", () => {
+      const { container } = render(<EventsFeed />);
+      const all = rowByLabel(container, "開催予定");
+      expect(all.tagName).toBe("BUTTON");
+      expect(all.getAttribute("aria-pressed")).toBe("false");
+      fireEvent.click(all);
+      expect(all.getAttribute("aria-pressed")).toBe("true");
+    });
+
+    // SHIG 13: an option that can only produce an empty list is not offered.
+    it("disables event types with no events", () => {
+      const { container } = render(<EventsFeed />);
+      expect((rowByLabel(container, "撮影会") as HTMLButtonElement).disabled).toBe(true);
+      expect((rowByLabel(container, "大会") as HTMLButtonElement).disabled).toBe(false);
+    });
+
+    // SHIG 50: hiragana finds katakana, like the facility search.
+    it("matches kana-insensitively", () => {
+      const { container, getAllByText } = render(<EventsFeed />);
+      const input = container.querySelector(".search input") as HTMLInputElement;
+      fireEvent.change(input, { target: { value: "おーるじゃぱん" } });
+      expect(getAllByText("All Japan XTC 2026").length).toBeGreaterThan(0);
+    });
+
+    // SHIG 55/60: the empty state offers a way back.
+    it("clears every condition from the empty state", () => {
+      const { container, getByText, queryByText } = render(<EventsFeed />);
+      fireEvent.click(rowByLabel(container, "ジャム"));
+      const input = container.querySelector(".search input") as HTMLInputElement;
+      fireEvent.change(input, { target: { value: "zzz-no-such-event" } });
+      fireEvent.click(getByText("条件をすべて解除"));
+      expect(input.value).toBe("");
+      expect(queryByText("NO EVENTS FOUND")).toBeNull();
+      expect(rowByLabel(container, "すべて").getAttribute("aria-pressed")).toBe("true");
+    });
+  });
 });

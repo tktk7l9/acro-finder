@@ -1367,6 +1367,9 @@ button {
   color: var(--ink-2);
 }
 .filter-row:hover { background: var(--bg-2); color: var(--ink); }
+.filter-row { width: 100%; text-align: left; }
+.filter-row:disabled { opacity: .45; cursor: default; }
+.filter-row:disabled:hover { background: none; color: var(--ink-2); }
 .filter-row.active {
   background: var(--bg-2);
   color: var(--ink);
