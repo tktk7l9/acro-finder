@@ -21,6 +21,7 @@ import { loadFavorites, saveFavorites, toggleFavorite } from "@/lib/favorites";
 const EVENT_COUNT = EVENTS.length;
 import { FacilityCard } from "@/components/FacilityCard";
 import { DetailPanel } from "@/components/DetailPanel";
+import { MapPlaceholder } from "@/components/MapPlaceholder";
 
 // Leaflet needs `window`, so the map is client-only (no SSR).
 const InteractiveMap = dynamic(
@@ -67,6 +68,7 @@ export default function Page() {
   const [focusPref, setFocusPref] = useState<Prefecture | null>(null);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [favOnly, setFavOnly] = useState(false);
+  const [basemapReady, setBasemapReady] = useState(false);
   // The user pin is only drawn for a real fix — before that the base point is
   // Tokyo Station, and a pin labelled 現在地 there would be a false statement.
   const located = geoState === "active";
@@ -383,7 +385,8 @@ export default function Page() {
           </div>
         </aside>
 
-        <main className="map-pane">
+        <main className={`map-pane ${basemapReady ? "" : "basemap-pending"}`}>
+          <MapPlaceholder done={basemapReady} />
           <InteractiveMap
             facilities={filtered}
             activeId={activeId}
@@ -391,6 +394,7 @@ export default function Page() {
             userPos={userPos}
             showUser={located}
             focusPref={focusPref}
+            onBasemapReady={() => setBasemapReady(true)}
           />
 
           <div className="map-overlay">

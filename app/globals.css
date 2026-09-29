@@ -556,6 +556,59 @@ button {
   overflow: hidden;
 }
 
+/* === Static map placeholder ===
+   Server-rendered picture of the basemap shown until Leaflet draws its first
+   tiles (components/MapPlaceholder.tsx). It is laid out to match the view
+   Leaflet opens with: centred on Japan's bounds at the zoom fitBounds picks.
+   That zoom depends on the map size, so each container query below switches
+   the scale at the size where Leaflet moves to the next zoom. The numbers come
+   from zoomThreshold() in lib/map-view.ts; lib/map-view.test.ts checks them. */
+.map-placeholder {
+  position: absolute;
+  inset: 0;
+  container: map-placeholder / size;
+  overflow: hidden;
+  pointer-events: none;
+  background: var(--bg-3);
+  transition: opacity .3s, visibility .3s;
+}
+.map-placeholder.done {
+  opacity: 0;
+  visibility: hidden;
+}
+.map-placeholder img {
+  --s: 1;
+  position: absolute;
+  max-width: none;
+  width: calc(var(--ph-w) * var(--s) * 1px);
+  height: auto;
+  left: calc(50% - var(--ph-cx) * var(--s) * 1px);
+  top: calc(50% - var(--ph-cy) * var(--s) * 1px);
+}
+@container map-placeholder (min-width: 391px) and (min-height: 437px) {
+  .map-placeholder img { --s: 2; }
+}
+@container map-placeholder (min-width: 781px) and (min-height: 873px) {
+  .map-placeholder img { --s: 4; }
+}
+@container map-placeholder (min-width: 1561px) and (min-height: 1746px) {
+  .map-placeholder img { --s: 8; }
+}
+.map-placeholder-credit {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  padding: 0 5px;
+  background: rgba(14, 15, 13, 0.78);
+  color: var(--ink-2);
+  font-size: 9px;
+  line-height: 1.4;
+}
+/* Let the placeholder show through until the tiles are in. */
+.map-pane.basemap-pending .leaflet-container {
+  background: transparent;
+}
+
 /* === Leaflet tile map === */
 .leaflet-container {
   background: var(--bg-3);
@@ -1125,11 +1178,12 @@ button {
 /* Quick SNS row on card */
 .card-sns {
   display: flex;
-  gap: 4px;
+  gap: 6px;
   margin-top: 6px;
 }
+/* 28px (about 7mm) keeps each link a comfortable tap target (SHIG 13, 78). */
 .card-sns a {
-  width: 22px; height: 22px;
+  width: 28px; height: 28px;
   border-radius: 5px;
   background: var(--bg-3);
   border: 1px solid var(--line);

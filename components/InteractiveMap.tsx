@@ -7,12 +7,75 @@ import "leaflet/dist/leaflet.css";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import type { Facility } from "@/lib/types";
 import { formatDistance } from "@/lib/util";
+import { loadTileIntoCanvas } from "@/lib/canvas-tile";
+import {
+  JAPAN_BOUNDS as JAPAN_BOUNDS_TUPLE,
+  MAX_ZOOM,
+  MIN_ZOOM,
+  clusterRadius,
+} from "@/lib/map-view";
+
+const GSI_PALE_URL = "https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png";
+
+// Abort functions of tiles whose image is still downloading.
+const pendingTiles = new WeakMap<HTMLElement, () => void>();
+
+function abortTile(el: HTMLElement): boolean {
+  const abort = pendingTiles.get(el);
+  if (!abort) return false;
+  pendingTiles.delete(el);
+  abort();
+  return true;
+}
+
+// GridLayer internals that L.TileLayer also relies on for aborting.
+type GridLayerInternals = L.GridLayer & {
+  _tiles: Record<string, { el: HTMLElement; coords: L.Coords }>;
+  _tileZoom?: number;
+};
+const gridRemoveTile = (L.GridLayer.prototype as unknown as {
+  _removeTile(this: L.GridLayer, key: string): void;
+})._removeTile;
+
+// Basemap layer that paints each tile into a <canvas> rather than an <img>, so a
+// tile never becomes the page's LCP element (see lib/canvas-tile.ts).
+const CanvasTileLayer = L.GridLayer.extend({
+  createTile(this: L.GridLayer, coords: L.Coords, done: L.DoneCallback) {
+    const tile = document.createElement("canvas");
+    const size = this.getTileSize();
+    tile.width = size.x;
+    tile.height = size.y;
+    const abort = loadTileIntoCanvas(tile, L.Util.template(GSI_PALE_URL, coords), (err, el) => {
+      pendingTiles.delete(tile);
+      done(err, el);
+    });
+    pendingTiles.set(tile, abort);
+    return tile;
+  },
+  // Like L.TileLayer: on a zoom change, drop tiles of other zoom levels that
+  // are still downloading, so a pinch-zoom does not wait on stale requests.
+  _abortLoading(this: GridLayerInternals) {
+    for (const key of Object.keys(this._tiles)) {
+      const { el, coords } = this._tiles[key];
+      if (coords.z === this._tileZoom || !abortTile(el)) continue;
+      L.DomUtil.remove(el);
+      delete this._tiles[key];
+      this.fire("tileabort", { tile: el, coords });
+    }
+  },
+  // Like L.TileLayer: cancel the download of a tile that leaves the view.
+  _removeTile(this: GridLayerInternals, key: string) {
+    const tile = this._tiles[key];
+    if (tile) abortTile(tile.el);
+    gridRemoveTile.call(this, key);
+  },
+}) as new (options?: L.GridLayerOptions) => L.GridLayer;
 
 // Bounding box of Japan's four main islands, used for the default view.
-const JAPAN_BOUNDS: L.LatLngBoundsExpression = [
-  [30.8, 129.0],
-  [45.8, 146.2],
-];
+const JAPAN_BOUNDS = L.latLngBounds(
+  L.latLng(...JAPAN_BOUNDS_TUPLE[0]),
+  L.latLng(...JAPAN_BOUNDS_TUPLE[1]),
+);
 
 interface Props {
   facilities: Facility[];
@@ -21,6 +84,10 @@ interface Props {
   userPos: { lat: number; lng: number };
   showUser: boolean;
   focusPref?: { lat: number; lng: number } | null;
+  // Called once the first view's basemap tiles are drawn, or as soon as the map
+  // moves away from the initial view — the page then drops its static
+  // placeholder (see lib/map-view.ts).
+  onBasemapReady?: () => void;
 }
 
 // Zoom level used when recentering on a selected prefecture.
@@ -44,6 +111,7 @@ export function InteractiveMap({
   userPos,
   showUser,
   focusPref,
+  onBasemapReady,
 }: Props) {
   const mapElRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
@@ -54,8 +122,10 @@ export function InteractiveMap({
   const onSelectRef = useRef(onSelect);
   // Keep the marker click handler's callback current without re-binding every
   // marker — the ref is refreshed after each render.
+  const onBasemapReadyRef = useRef(onBasemapReady);
   useEffect(() => {
     onSelectRef.current = onSelect;
+    onBasemapReadyRef.current = onBasemapReady;
   });
   const prevUserPos = useRef<{ lat: number; lng: number } | null>(null);
 
@@ -66,21 +136,39 @@ export function InteractiveMap({
     if (!mapElRef.current || mapRef.current) return;
     const map = L.map(mapElRef.current, {
       zoomControl: false,
-      minZoom: 4,
-      maxZoom: 18,
+      minZoom: MIN_ZOOM,
+      maxZoom: MAX_ZOOM,
     }).fitBounds(JAPAN_BOUNDS);
-    L.tileLayer("https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png", {
+    const basemap = new CanvasTileLayer({
       className: "gsi-dark",
-      maxZoom: 18,
-      maxNativeZoom: 18,
+      maxZoom: MAX_ZOOM,
+      maxNativeZoom: MAX_ZOOM,
       attribution:
         '<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noreferrer">地理院タイル</a>',
     }).addTo(map);
+    // Drop the placeholder once the first view's tiles are in. If every tile
+    // failed (GSI unreachable), keep it: a static map beats an empty box.
+    let tilesDrawn = 0;
+    const countTile = () => {
+      tilesDrawn += 1;
+    };
+    const basemapReady = () => {
+      basemap.off("tileload", countTile);
+      basemap.off("load", onFirstLoad);
+      map.off("movestart zoomstart", basemapReady);
+      onBasemapReadyRef.current?.();
+    };
+    const onFirstLoad = () => {
+      if (tilesDrawn > 0) basemapReady();
+    };
+    basemap.on("tileload", countTile);
+    basemap.on("load", onFirstLoad);
+    map.on("movestart zoomstart", basemapReady);
 
     // Cluster nearby facility markers so dense urban areas stay legible.
     const clusterGroup = L.markerClusterGroup({
       showCoverageOnHover: false,
-      maxClusterRadius: 52,
+      maxClusterRadius: clusterRadius,
       disableClusteringAtZoom: 13,
       spiderfyOnMaxZoom: true,
       iconCreateFunction: (cluster) =>
