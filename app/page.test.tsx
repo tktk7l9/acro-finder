@@ -340,6 +340,25 @@ describe("home page", () => {
       back.mockRestore();
     });
 
+    // SHIG 38: on desktop the search box stays usable beside the open panel,
+    // so a query typed then must survive closing the panel (which goes back
+    // in history to the entry that predates the query).
+    it("keeps a query typed while the panel was open after closing it", async () => {
+      const { container } = render(<Page />);
+      fireEvent.click(container.querySelector(".card") as HTMLElement);
+      const input = container.querySelector(".search input") as HTMLInputElement;
+      fireEvent.change(input, { target: { value: "MISSION" } });
+      expect(container.querySelectorAll(".card")).toHaveLength(2);
+      await act(async () => {
+        fireEvent.click(container.querySelector(".detail-close") as HTMLElement);
+        await new Promise((r) => setTimeout(r, 10));
+      });
+      expect(container.querySelector(".detail")).toBeNull();
+      expect(input.value).toBe("MISSION");
+      expect(container.querySelectorAll(".card")).toHaveLength(2);
+      expect(window.location.search).toBe("?q=MISSION");
+    });
+
     it("does not navigate back when closing a deep-linked panel", () => {
       window.history.replaceState(null, "", "/?f=f01");
       const back = vi.spyOn(window.history, "back");

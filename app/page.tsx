@@ -82,11 +82,14 @@ export default function Page() {
   // Tokyo Station, and a pin labelled 現在地 there would be a false statement.
   const located = geoState === "active";
 
-  // Apply `?q=` / `?f=` to state; returns whether a facility panel is open.
-  const applyUrlState = useCallback((sp: URLSearchParams): boolean => {
+  // Apply the URL's `?f=` to state; returns whether a facility panel is open.
+  // Only the panel is restored on back/forward: the search query is not history
+  // (it is written with replaceState), so a query typed while the panel was
+  // open must survive closing it (SHIG 38). The URL is re-synced from state
+  // below when they disagree.
+  const restorePanel = useCallback((sp: URLSearchParams): boolean => {
     const f = sp.get("f");
     const id = f && FACILITIES.some((x) => x.id === f) ? f : null;
-    setQuery(sp.get("q") ?? "");
     setActiveId(id);
     return id !== null;
   }, []);
@@ -139,11 +142,13 @@ export default function Page() {
   // than next/navigation) so the page stays renderable without a router
   // context — which keeps it unit-testable in isolation.
   useEffect(() => {
-    applyUrlState(new URLSearchParams(window.location.search));
+    const sp = new URLSearchParams(window.location.search);
+    setQuery(sp.get("q") ?? "");
+    restorePanel(sp);
     // Favourites are read here too (not in a useState initializer) so the
     // server-rendered HTML and the first client render agree.
     setFavorites(loadFavorites());
-  }, [applyUrlState]);
+  }, [restorePanel]);
 
   // Keep the URL (and, for the panel, the history) in sync with the view: the
   // panel covers the whole screen on phones, so the back button closes it
@@ -155,7 +160,7 @@ export default function Page() {
     const qs = sp.toString();
     return qs ? `?${qs}` : "";
   }, [query, activeId]);
-  const closePanel = usePanelHistory({ panelOpen: !!activeId, search, restore: applyUrlState });
+  const closePanel = usePanelHistory({ panelOpen: !!activeId, search, restore: restorePanel });
 
   // Filtering and sorting run inside a Transition so the <ViewTransition> around
   // each card can animate cards entering, leaving and moving. Typing is already

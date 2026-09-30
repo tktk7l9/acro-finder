@@ -162,7 +162,11 @@ describe("SkillsApp", () => {
       const { container } = render(<SkillsApp />);
       fireEvent.click(container.querySelector(".skl-card") as HTMLElement);
       const input = container.querySelector(".skills-app .search input") as HTMLInputElement;
-      fireEvent.keyDown(input, { key: "Escape" });
+      // A wrong close would go through history.back, which jsdom fires later.
+      await act(async () => {
+        fireEvent.keyDown(input, { key: "Escape" });
+        await new Promise((r) => setTimeout(r, 10));
+      });
       expect(container.querySelector(".skl-panel.open")).toBeTruthy();
       // Esc elsewhere closes it (via history.back, which jsdom fires later).
       await act(async () => {

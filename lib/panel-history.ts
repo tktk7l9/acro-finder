@@ -14,6 +14,16 @@ interface Options {
   restore: (params: URLSearchParams) => boolean;
 }
 
+// Same parameters regardless of order or percent-encoding, so a hand-typed
+// `?f=a&q=b` is not "different" from the `?q=b&f=a` the page would write.
+function sameSearch(a: string, b: string): boolean {
+  const pa = new URLSearchParams(a);
+  const pb = new URLSearchParams(b);
+  pa.sort();
+  pb.sort();
+  return pa.toString() === pb.toString();
+}
+
 /**
  * Mirrors a panel's open state into the URL and the browser history.
  *
@@ -28,8 +38,8 @@ interface Options {
  */
 export function usePanelHistory({ panelOpen, search, restore }: Options) {
   const pushed = useRef(false);
-  const wasOpen = useRef(false);
-  const synced = useRef(false);
+  // State as of the previous effect run; null until the first run.
+  const last = useRef<{ open: boolean; search: string } | null>(null);
   const pendingClose = useRef<(() => void) | null>(null);
   const restoreRef = useRef(restore);
   useEffect(() => {
@@ -37,16 +47,14 @@ export function usePanelHistory({ panelOpen, search, restore }: Options) {
   });
 
   useEffect(() => {
+    const prev = last.current;
+    last.current = { open: panelOpen, search };
     // The first run happens before mount-time hydration from the URL has
     // landed, so it must not clobber the URL with the still-default state.
-    if (!synced.current) {
-      synced.current = true;
-      wasOpen.current = panelOpen;
-      return;
-    }
-    const opening = panelOpen && !wasOpen.current;
-    wasOpen.current = panelOpen;
-    if (window.location.search === search) return;
+    // StrictMode re-runs the effect with nothing changed; skip that too.
+    if (!prev || (prev.open === panelOpen && prev.search === search)) return;
+    const opening = panelOpen && !prev.open;
+    if (sameSearch(window.location.search, search)) return;
     const url = search || window.location.pathname;
     if (opening) {
       window.history.pushState(null, "", url);
