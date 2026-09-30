@@ -10,7 +10,9 @@
   --ink: #f1f3ec;
   --ink-2: #c6cab8;
   --ink-3: #8a8f7c;
-  --ink-4: #565a4d;
+  /* Lightest text step. Kept at 4.5:1 or better on --bg / --bg-2 / --panel
+     (WCAG AA for 9-11px labels); on --bg-3 use --ink-3 instead. */
+  --ink-4: #7f8474;
   --accent: oklch(0.86 0.18 115);
   --accent-2: oklch(0.7 0.18 50);
   --accent-ink: #0c0e0a;
@@ -95,6 +97,26 @@ button {
   place-items: center;
   font-weight: 800;
   font-family: var(--font-en);
+}
+/* The wordmark doubles as the page's h1 on the map screen. */
+.brand-name {
+  margin: 0;
+  font: inherit;
+  letter-spacing: inherit;
+}
+.brand-name .jp { display: block; }
+/* Text for screen readers only (e.g. a page heading the layout has no room for). */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
 }
 .brand .jp {
   font-family: var(--font-jp);
@@ -361,6 +383,30 @@ button {
 }
 .card .card-row { height: 100%; }
 .card:hover { background: var(--bg-2); }
+/* The name is the real control; its ::after stretches over the whole card so
+   the full card stays the tap target without nesting the SNS links inside a
+   role=button (SHIG 78, 94). The links sit above it via z-index. */
+.card-open {
+  padding: 0;
+  text-align: left;
+  font: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.card-open::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+.card-open:focus-visible { outline: none; }
+.card:has(.card-open:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
 .card.active {
   background: var(--bg-2);
 }
@@ -843,6 +889,9 @@ button {
 }
 
 /* === Detail panel === */
+/* The panel receives focus programmatically when it opens; the opening itself
+   is the cue, so no ring around the whole panel. */
+.detail:focus { outline: none; }
 .detail {
   position: absolute;
   top: 0; right: 0; bottom: 0;
@@ -1180,6 +1229,8 @@ button {
   display: flex;
   gap: 6px;
   margin-top: 6px;
+  position: relative;
+  z-index: 1;
 }
 /* 28px (about 7mm) keeps each link a comfortable tap target (SHIG 13, 78). */
 .card-sns a {
@@ -1690,7 +1741,10 @@ button {
   border-radius: 4px;
 }
 .event-card:hover { background: var(--bg-2); }
-.event-card.past { opacity: 0.55; }
+/* Past events are muted by desaturating and toning down the title only, not by
+   fading the whole card: a 0.55 opacity dropped every label below 4.5:1. */
+.event-card.past { filter: saturate(0.35); }
+.event-card.past .event-title { color: var(--ink-2); }
 
 .event-date {
   text-align: center;
@@ -1984,6 +2038,7 @@ button {
   cursor: grab;
 }
 .skl-lv-thumb:active { cursor: grabbing; }
+.skl-lv-thumb:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .skl-tag-chips { display: flex; gap: 6px; flex-wrap: wrap; }
 .skl-tag-chip {
   background: var(--bg-2);
@@ -2103,6 +2158,8 @@ button {
   fill: var(--bg-3);
   stroke: var(--line-2);
 }
+.skl-graph-node:focus-visible { outline: none; }
+.skl-graph-node:focus-visible rect:first-of-type { stroke: var(--accent); stroke-width: 2; }
 .skl-graph-node.sel rect:first-of-type {
   stroke: var(--accent);
   stroke-width: 2;
@@ -2159,7 +2216,25 @@ button {
   transition: border-color .15s, background .15s;
 }
 .skl-card:hover { border-color: var(--line-2); background: var(--bg-3); }
+.skl-card:hover .skl-tag { color: var(--ink-3); }
 .skl-card.active { border-color: var(--accent); }
+/* Same stretched-button pattern as .card-open: the name is the control, the
+   ★ / ✓ buttons stay separate tab stops above it. */
+.skl-card-open {
+  padding: 0;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  display: block;
+  width: 100%;
+}
+.skl-card-open::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+.skl-card-open:focus-visible { outline: none; }
+.skl-card:has(.skl-card-open:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
 .skl-card-media {
   position: relative;
   aspect-ratio: 4 / 3;
@@ -2208,6 +2283,7 @@ button {
 .skl-card-lv .l { font-size: 7px; letter-spacing: 0.18em; margin-top: 2px; }
 .skl-card-iconbtn {
   position: absolute;
+  z-index: 1;
   bottom: 7px;
   width: 26px; height: 26px;
   display: grid; place-items: center;

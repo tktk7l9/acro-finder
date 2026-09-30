@@ -113,9 +113,9 @@ export function EventsFeed() {
       </header>
 
       <div className="events-main">
-        <aside className="events-sidebar">
+        <aside className="events-sidebar" aria-label="絞り込み">
           <div className="sidebar-section">
-            <h4 className="sidebar-title">Status / 状態</h4>
+            <h2 className="sidebar-title">Status / 状態</h2>
             <div className="filter-list">
               {STATUS_OPTIONS.map((s) => (
                 <button
@@ -137,7 +137,7 @@ export function EventsFeed() {
           </div>
 
           <div className="sidebar-section">
-            <h4 className="sidebar-title">Type / 種別</h4>
+            <h2 className="sidebar-title">Type / 種別</h2>
             <div className="filter-list">
               {EVENT_TYPES.map((t) => (
                 <button
@@ -172,7 +172,9 @@ export function EventsFeed() {
           </div>
         </aside>
 
-        <main className="events-feed">
+        {/* On wide screens the feed is the scroll container and holds no
+            control of its own, so it must be focusable to scroll by keyboard. */}
+        <main className="events-feed" tabIndex={0}>
           <div className="feed-header">
             <h1 className="feed-title">
               EVENTS &amp; COMPETITIONS

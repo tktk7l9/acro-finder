@@ -195,7 +195,23 @@ describe("home page", () => {
       close(container);
       expect(container.querySelector(".detail")).toBeNull();
       await new Promise((r) => setTimeout(r, 0));
-      expect(document.activeElement?.getAttribute("data-facility-id")).toBe("f01");
+      expect(document.activeElement?.closest(".card")?.getAttribute("data-facility-id")).toBe("f01");
+    });
+
+    // SHIG 94: opening from a card lands focus in the panel, not on the next card.
+    it("moves focus into the detail panel when a card is opened", () => {
+      const { container } = render(<Page />);
+      const open = container.querySelector('.card[data-facility-id="f01"] .card-open') as HTMLElement;
+      open.focus();
+      fireEvent.click(open);
+      expect(document.activeElement?.classList.contains("detail")).toBe(true);
+    });
+
+    it("does not steal focus when the panel is restored from the URL", () => {
+      window.history.replaceState(null, "", "/?f=f01");
+      const { container } = render(<Page />);
+      expect(container.querySelector(".detail")).not.toBeNull();
+      expect(document.activeElement).toBe(document.body);
     });
 
     // SHIG 94/96: toggle state is exposed, not only colour.

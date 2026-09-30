@@ -46,7 +46,7 @@ export function EventCard({ event }: Props) {
             </span>
           )}
         </div>
-        <h3 className="event-title">{event.title}</h3>
+        <h2 className="event-title">{event.title}</h2>
         <p className="event-title-ja">{event.titleJa}</p>
         <p className="event-desc">{event.description}</p>
         {hasBottom && (

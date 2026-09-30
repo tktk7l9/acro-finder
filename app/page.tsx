@@ -44,10 +44,13 @@ function focusIsInDetail(): boolean {
   return !!document.activeElement?.closest(".detail");
 }
 
-// The panel unmounts on close; focus the card once React has committed that.
+// The panel unmounts on close; focus the card's button once React has
+// committed that.
 function focusCardAfterRender(id: string) {
   setTimeout(() => {
-    document.querySelector<HTMLElement>(`.card[data-facility-id="${id}"]`)?.focus();
+    document
+      .querySelector<HTMLElement>(`.card[data-facility-id="${id}"] .card-open`)
+      ?.focus();
   }, 0);
 }
 
@@ -179,6 +182,19 @@ export default function Page() {
     });
   };
 
+  // Opening from a card or a marker also moves focus into the panel; a link
+  // with ?f= restores the panel without stealing focus.
+  const focusDetailOnOpen = useRef(false);
+  const openDetail = (id: string) => {
+    focusDetailOnOpen.current = true;
+    setActiveId(id);
+  };
+  useEffect(() => {
+    if (!activeId || !focusDetailOnOpen.current) return;
+    focusDetailOnOpen.current = false;
+    document.querySelector<HTMLElement>(".detail")?.focus();
+  }, [activeId]);
+
   const toggleFav = (id: string) => {
     setFavorites((prev) => {
       const next = toggleFavorite(prev, id);
@@ -261,10 +277,10 @@ export default function Page() {
       <header className="topbar">
         <div className="brand">
           <div className="brand-mark">A</div>
-          <div>
+          <h1 className="brand-name">
             ACRO<span style={{ color: "var(--ink-3)" }}>/</span>FINDER
-            <div className="jp">アクロバット練習施設</div>
-          </div>
+            <span className="jp">アクロバット練習施設</span>
+          </h1>
         </div>
         <TopNav active="map" badges={{ events: EVENT_COUNT }} />
         <div className="search">
@@ -311,7 +327,7 @@ export default function Page() {
       </header>
 
       <div className="main">
-        <aside className="list-pane">
+        <aside className="list-pane" aria-label="施設リスト">
           <div className="list-header">
             <div className="list-header-top">
               <div className="list-count">
@@ -377,7 +393,7 @@ export default function Page() {
                     facility={f}
                     active={activeId === f.id}
                     favorite={favorites.includes(f.id)}
-                    onClick={() => setActiveId(f.id)}
+                    onClick={() => openDetail(f.id)}
                   />
                 </ViewTransition>
               ))
@@ -390,7 +406,7 @@ export default function Page() {
           <InteractiveMap
             facilities={filtered}
             activeId={activeId}
-            onSelect={setActiveId}
+            onSelect={openDetail}
             userPos={userPos}
             showUser={located}
             focusPref={focusPref}

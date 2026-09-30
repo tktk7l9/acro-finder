@@ -124,8 +124,13 @@ export function ContactForm() {
           onBlur={handleBlur("name")}
           onChange={handleChange("name")}
           aria-invalid={hasError("name") || undefined}
+          aria-describedby={hasError("name") ? `${nameId}-error` : undefined}
         />
-        {hasError("name") && <p className="form-error">{FIELD_ERROR.name}</p>}
+        {hasError("name") && (
+          <p id={`${nameId}-error`} className="form-error">
+            {FIELD_ERROR.name}
+          </p>
+        )}
       </div>
 
       <div className="form-field">
@@ -143,8 +148,13 @@ export function ContactForm() {
           onBlur={handleBlur("email")}
           onChange={handleChange("email")}
           aria-invalid={hasError("email") || undefined}
+          aria-describedby={hasError("email") ? `${emailId}-error` : undefined}
         />
-        {hasError("email") && <p className="form-error">{FIELD_ERROR.email}</p>}
+        {hasError("email") && (
+          <p id={`${emailId}-error`} className="form-error">
+            {FIELD_ERROR.email}
+          </p>
+        )}
       </div>
 
       <div className="form-field">
@@ -176,8 +186,13 @@ export function ContactForm() {
           onBlur={handleBlur("message")}
           onChange={handleChange("message")}
           aria-invalid={hasError("message") || undefined}
+          aria-describedby={hasError("message") ? `${messageId}-error` : undefined}
         />
-        {hasError("message") && <p className="form-error">{FIELD_ERROR.message}</p>}
+        {hasError("message") && (
+          <p id={`${messageId}-error`} className="form-error">
+            {FIELD_ERROR.message}
+          </p>
+        )}
       </div>
 
       {formErrorMessage && (

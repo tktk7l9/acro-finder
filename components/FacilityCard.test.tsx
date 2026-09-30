@@ -26,17 +26,18 @@ describe("FacilityCard", () => {
     expect(onClick).toHaveBeenCalledOnce();
   });
 
-  it("fires onClick on Enter and Space for keyboard users", () => {
+  // The name is a native <button>, so Enter / Space work without a key handler
+  // and the SNS links are not nested inside a role=button (axe nested-interactive).
+  it("exposes the name as the one button that opens the facility", () => {
     const onClick = vi.fn();
-    const { container } = render(
+    const { container, getByRole } = render(
       <FacilityCard facility={mission} active={false} onClick={onClick} />,
     );
-    const card = container.querySelector(".card") as HTMLElement;
-    expect(card.getAttribute("role")).toBe("button");
-    expect(card.tabIndex).toBe(0);
-    fireEvent.keyDown(card, { key: "Enter" });
-    fireEvent.keyDown(card, { key: " " });
-    expect(onClick).toHaveBeenCalledTimes(2);
+    expect(container.querySelector(".card")?.getAttribute("role")).toBeNull();
+    const open = getByRole("button", { name: mission.name });
+    expect(open.closest(".card")).not.toBeNull();
+    fireEvent.click(open);
+    expect(onClick).toHaveBeenCalledOnce();
   });
 
   it("applies the active class", () => {

@@ -55,10 +55,27 @@ describe("SkillsApp", () => {
     it("opens a skill from the keyboard", () => {
       const { container } = render(<SkillsApp />);
       const card = container.querySelector(".skl-card") as HTMLElement;
-      expect(card.getAttribute("role")).toBe("button");
-      expect(card.tabIndex).toBe(0);
-      fireEvent.keyDown(card, { key: "Enter" });
+      // The card is not a control itself: its name is a native <button>, so
+      // the ★ / ✓ buttons are not nested inside a role=button.
+      expect(card.getAttribute("role")).toBeNull();
+      const open = card.querySelector(".skl-card-open") as HTMLButtonElement;
+      expect(open.tagName).toBe("BUTTON");
+      fireEvent.click(open);
       expect(container.querySelector(".skl-panel.open")).toBeTruthy();
+    });
+
+    it("moves the level slider with the arrow keys", () => {
+      const { getByLabelText, getByText } = render(<SkillsApp />);
+      const min = getByLabelText("難易度の下限");
+      expect(min.getAttribute("aria-valuenow")).toBe("1");
+      fireEvent.keyDown(min, { key: "ArrowRight" });
+      expect(min.getAttribute("aria-valuenow")).toBe("2");
+      expect(getByText("Lv.2")).toBeTruthy();
+      fireEvent.keyDown(min, { key: "Home" });
+      expect(min.getAttribute("aria-valuenow")).toBe("1");
+      const max = getByLabelText("難易度の上限");
+      fireEvent.keyDown(max, { key: "ArrowLeft" });
+      expect(max.getAttribute("aria-valuenow")).toBe("9");
     });
 
     it("does not open the card when Enter is pressed on its star button", () => {

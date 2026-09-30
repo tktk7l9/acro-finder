@@ -15,17 +15,13 @@ interface Props {
 function FacilityCardImpl({ facility, active, favorite = false, onClick }: Props) {
   const { links } = facility;
   return (
+    // The card itself is not a control: a role=button with focusable SNS links
+    // inside is a nested-interactive violation. The name is a real <button>
+    // whose ::after covers the card (see .card-open), and this onClick only
+    // catches the pointer outside that overlay (SHIG 94).
     <div
       className={`card ${active ? "active" : ""}`}
       onClick={onClick}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onClick();
-        }
-      }}
-      role="button"
-      tabIndex={0}
       aria-current={active || undefined}
       data-facility-id={facility.id}
     >
@@ -35,8 +31,17 @@ function FacilityCardImpl({ facility, active, favorite = false, onClick }: Props
           <Photo data={facility.photos[0]} src={facility.image} type={facility.type} />
         </div>
         <div className="card-body">
-          <h3 className="card-title">
-            <span className="title-text">{facility.name}</span>
+          <h2 className="card-title">
+            <button
+              type="button"
+              className="card-open title-text"
+              onClick={(e) => {
+                e.stopPropagation();
+                onClick();
+              }}
+            >
+              {facility.name}
+            </button>
             {favorite && (
               <span className="card-fav" role="img" aria-label="お気に入り">
                 ★
@@ -45,7 +50,7 @@ function FacilityCardImpl({ facility, active, favorite = false, onClick }: Props
             {facility.isOpen !== undefined && (
               <StatusPill open={facility.isOpen} closesAt={facility.closesAt ?? ""} />
             )}
-          </h3>
+          </h2>
           <p className="card-title-ja">
             {facility.nameJa} · {facility.typeLabel}
           </p>
