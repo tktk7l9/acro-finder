@@ -359,11 +359,16 @@ describe("home page", () => {
       expect(screen.queryByText("✕ 解除")).toBeNull();
     });
 
-    it("opens a card from the keyboard and toggles its favourite from the panel", () => {
+    // The card's name is a native <button> (#48), so Enter / Space open it
+    // without a key handler; the panel shows the same facility.
+    it("opens the panel for the facility whose name button was activated", () => {
       const { container } = render(<Page />);
       const card = container.querySelector('.card[data-facility-id="f03"]') as HTMLElement;
-      fireEvent.keyDown(card, { key: "Enter" });
-      expect(container.querySelector(".detail-name")?.textContent).toBe(card.querySelector(".title-text")?.textContent);
+      const open = card.querySelector(".card-open") as HTMLButtonElement;
+      expect(open.tagName).toBe("BUTTON");
+      fireEvent.click(open);
+      expect(container.querySelector(".detail-name")?.textContent).toBe(open.textContent);
+      expect(container.querySelector('.card[aria-current="true"]')?.getAttribute("data-facility-id")).toBe("f03");
     });
   });
 });
