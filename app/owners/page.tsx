@@ -22,6 +22,7 @@ const TIERS = [
     title: "無料掲載",
     body: "施設の基本情報（所在地・設備・レッスン・予約方法など）を無料で掲載できます。情報の修正・追加もいつでも無料。まずはここから。",
     cta: "掲載・修正を依頼する",
+    anchor: "contact-listing",
   },
   {
     badge: "PR",
@@ -29,6 +30,7 @@ const TIERS = [
     title: "PR掲載（特集枠）",
     body: "エリアページや施設一覧での優先表示と PR バッジで、集客を強化します。料金はお問い合わせください。",
     cta: "PR掲載を相談する",
+    anchor: "contact-pr",
   },
   {
     badge: "準備中",
@@ -36,6 +38,7 @@ const TIERS = [
     title: "予約・月謝管理ツール",
     body: "予約受付・会員管理・月謝集金をまとめて行えるツールを開発中です。先行案内をご希望の方はご連絡ください。",
     cta: "先行案内を希望する",
+    anchor: "contact-tool",
   },
 ];
 
@@ -80,7 +83,9 @@ export default async function OwnersPage() {
               <span className={`owner-badge ${t.badgeClass}`}>{t.badge}</span>
               <h2>{t.title}</h2>
               <p>{t.body}</p>
-              <a className="btn btn-primary owner-cta" href="#owner-contact">
+              {/* Each anchor sits at the top of the form and preselects its
+                  subject there (SHIG 40, 42). */}
+              <a className="btn btn-primary owner-cta" href={`#${t.anchor}`}>
                 {t.cta}
               </a>
             </div>

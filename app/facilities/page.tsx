@@ -36,8 +36,18 @@ export default async function FacilitiesIndexPage() {
           トリッキング・パルクール・アクロバット（体操・宙返り）を練習できる全国の施設を都道府県別に
           まとめました。各施設ページで料金・設備・レッスン・予約方法・アクセスを確認できます。
         </p>
+        {/* 23 prefectures / 99 cards run to a dozen screens; jump straight to
+            the prefecture instead of scrolling for it (SHIG 59, 22, 17). */}
+        <nav className="area-jump" id="area-jump" aria-label="都道府県へ移動">
+          {groups.map((g) => (
+            <a key={g.slug} href={`#area-${g.slug}`}>
+              {g.prefecture.name}
+              <span className="count">{g.facilities.length}</span>
+            </a>
+          ))}
+        </nav>
         {groups.map((g) => (
-          <section key={g.slug} className="area-section">
+          <section key={g.slug} className="area-section" id={`area-${g.slug}`}>
             <div className="area-section-head">
               <h2>
                 {g.prefecture.name}
@@ -56,6 +66,9 @@ export default async function FacilitiesIndexPage() {
                 <FacilityLink key={f.id} facility={f} />
               ))}
             </div>
+            <a className="area-back-top" href="#area-jump">
+              ↑ 都道府県一覧へ
+            </a>
           </section>
         ))}
 

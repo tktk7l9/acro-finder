@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { render, fireEvent, screen, within } from "@testing-library/react";
+import { render, fireEvent, screen, within, act } from "@testing-library/react";
 import { SkillsApp } from "./SkillsApp";
 import { SKILLS } from "@/lib/skills-data";
 
@@ -9,7 +9,11 @@ const genreTab = (container: HTMLElement, label: string) =>
   ) as HTMLElement;
 
 describe("SkillsApp", () => {
-  beforeEach(() => localStorage.clear());
+  beforeEach(() => {
+    localStorage.clear();
+    // The open skill is mirrored into ?s=; reset so it does not leak between tests.
+    window.history.replaceState(null, "", "/skills");
+  });
 
   it("renders all 160 skill cards initially", () => {
     const { container } = render(<SkillsApp />);
@@ -126,6 +130,84 @@ describe("SkillsApp", () => {
       vi.stubGlobal("matchMedia", (q: string) => ({ matches: false, media: q }));
       const { getByText } = render(<SkillsApp />);
       expect(getByText("▼ 折りたたみ")).toBeTruthy();
+    });
+
+    // ── 2nd round ──
+
+    // SHIG 50: kana in either script finds the skill.
+    it("matches katakana names typed in hiragana", () => {
+      const { container } = render(<SkillsApp />);
+      const input = container.querySelector(".skills-app .search input") as HTMLInputElement;
+      fireEvent.change(input, { target: { value: "ばっく" } });
+      const hira = container.querySelectorAll(".skl-card").length;
+      fireEvent.change(input, { target: { value: "バック" } });
+      expect(hira).toBeGreaterThan(0);
+      expect(hira).toBe(container.querySelectorAll(".skl-card").length);
+    });
+
+    // SHIG 55/60: the empty state says why and offers a way out.
+    it("clears every condition from the empty state", () => {
+      const { container, getByText } = render(<SkillsApp />);
+      fireEvent.click(genreTab(container, "パルクール"));
+      const input = container.querySelector(".skills-app .search input") as HTMLInputElement;
+      fireEvent.change(input, { target: { value: "zzz-no-such-skill" } });
+      expect(container.querySelectorAll(".skl-card")).toHaveLength(0);
+      fireEvent.click(getByText("条件をすべて解除"));
+      expect(input.value).toBe("");
+      expect(container.querySelectorAll(".skl-card")).toHaveLength(160);
+    });
+
+    // SHIG 60/6: Esc in the search box belongs to the box (as on the map page).
+    it("keeps the panel open when Escape is pressed in the search box", async () => {
+      const { container } = render(<SkillsApp />);
+      fireEvent.click(container.querySelector(".skl-card") as HTMLElement);
+      const input = container.querySelector(".skills-app .search input") as HTMLInputElement;
+      fireEvent.keyDown(input, { key: "Escape" });
+      expect(container.querySelector(".skl-panel.open")).toBeTruthy();
+      // Esc elsewhere closes it (via history.back, which jsdom fires later).
+      await act(async () => {
+        fireEvent.keyDown(window, { key: "Escape" });
+        await new Promise((r) => setTimeout(r, 10));
+      });
+      expect(container.querySelector(".skl-panel.open")).toBeNull();
+    });
+
+    // SHIG 11: the combo shows the genre in the user's words, not its id.
+    it("names the genre in Japanese inside a combo slot", () => {
+      const { container } = render(<SkillsApp />);
+      fireEvent.click(container.querySelector(".skl-card") as HTMLElement);
+      fireEvent.click(container.querySelector(".skl-sp-addcombo") as HTMLElement);
+      const slot = container.querySelector(".skl-combo-slot-lv")!.textContent!;
+      expect(slot).not.toMatch(/tricking|parkour|gym|break|ski|snow/);
+      expect(slot).toMatch(/トリッキング|パルクール|体操|ブレイク|スキー|スノボ/);
+    });
+
+    // SHIG 76/22 + 60/82: the open skill lives in the URL (?s=) and in the
+    // history, so a link can be shared and the back button closes the panel.
+    it("hydrates the open skill from ?s= and reflects a selection into the URL", () => {
+      window.history.replaceState(null, "", "/skills?s=cork");
+      const { container } = render(<SkillsApp />);
+      expect(container.querySelector(".skl-panel.open")?.textContent).toContain("コーク");
+      fireEvent.click(container.querySelector(".skl-sp-close") as HTMLElement);
+      expect(container.querySelector(".skl-panel.open")).toBeNull();
+      expect(window.location.search).toBe("");
+      fireEvent.click(container.querySelector(".skl-card") as HTMLElement);
+      expect(new URLSearchParams(window.location.search).get("s")).toBe(
+        container.querySelector(".skl-card .skl-card-id")?.textContent,
+      );
+    });
+
+    it("closes the skill panel with the browser back button", async () => {
+      window.history.replaceState(null, "", "/skills");
+      const { container } = render(<SkillsApp />);
+      fireEvent.click(container.querySelector(".skl-card") as HTMLElement);
+      expect(container.querySelector(".skl-panel.open")).toBeTruthy();
+      await act(async () => {
+        window.history.back();
+        await new Promise((r) => setTimeout(r, 10));
+      });
+      expect(container.querySelector(".skl-panel.open")).toBeNull();
+      expect(window.location.search).toBe("");
     });
 
     it("exposes the favourite / learned filters' state", () => {
@@ -333,13 +415,22 @@ describe("SkillsApp", () => {
       expect(JSON.parse(localStorage.getItem("acro_skill_dones")!)).toEqual(["back-tuck"]);
     });
 
-    it("closes with the ✕ button and with Escape", () => {
+    it("closes with the ✕ button and with Escape", async () => {
       const { container } = render(<SkillsApp />);
+      // A panel opened by a click pushed a history entry, so closing goes
+      // through history.back(), which jsdom delivers asynchronously.
+      const settle = () => new Promise((r) => setTimeout(r, 10));
       openSkill(container, "back-tuck");
-      fireEvent.click(screen.getByLabelText("閉じる"));
+      await act(async () => {
+        fireEvent.click(screen.getByLabelText("閉じる"));
+        await settle();
+      });
       expect(container.querySelector(".skl-panel.open")).toBeNull();
       openSkill(container, "back-tuck");
-      fireEvent.keyDown(window, { key: "Escape" });
+      await act(async () => {
+        fireEvent.keyDown(window, { key: "Escape" });
+        await settle();
+      });
       expect(container.querySelector(".skl-panel.open")).toBeNull();
     });
 

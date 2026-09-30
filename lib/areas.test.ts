@@ -10,6 +10,7 @@ import {
   facilitiesByPrefecture,
   prefectureSummary,
   sameAreaFacilities,
+  prefectureOptions,
 } from "./areas";
 
 describe("PREFECTURE_SLUGS", () => {
@@ -108,5 +109,17 @@ describe("sameAreaFacilities", () => {
     expect(near.length).toBeLessThanOrEqual(6);
     expect(near.every((x) => x.id !== f.id)).toBe(true);
     expect(near.every((x) => x.address.startsWith("東京都"))).toBe(true);
+  });
+});
+
+describe("prefectureOptions (SHIG 13, 35)", () => {
+  it("lists only prefectures that have facilities, north to south, with counts", () => {
+    const opts = prefectureOptions();
+    expect(opts.length).toBeGreaterThan(0);
+    expect(opts.every((o) => o.count > 0)).toBe(true);
+    const order = PREFECTURES.map((p) => p.name);
+    const idx = opts.map((o) => order.indexOf(o.prefecture.name));
+    expect([...idx].sort((a, b) => a - b)).toEqual(idx);
+    expect(opts.reduce((n, o) => n + o.count, 0)).toBe(FACILITIES.length);
   });
 });

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, fireEvent, screen, waitFor } from "@testing-library/react";
+import { render, fireEvent, screen, waitFor, act } from "@testing-library/react";
 import type { ContactFormState } from "@/lib/contact-state";
 
 // Mock the server action so jsdom doesn't import next/headers / resend.
@@ -200,5 +200,50 @@ describe("ContactForm", () => {
     expect(name.getAttribute("aria-invalid")).toBe("true");
     const id = name.getAttribute("aria-describedby")!;
     expect(document.getElementById(id)?.textContent).toBe("お名前を入力してください");
+  });
+
+  describe("SHIG review (2nd round)", () => {
+    // SHIG 38: what the user typed survives a server-side failure.
+    it("keeps the typed values when the server rejects the submission", async () => {
+      submitContactForm.mockResolvedValueOnce({ status: "error", fieldErrors: {}, formError: "server" });
+      const { container } = render(<ContactForm />);
+      const name = container.querySelector('input[name="name"]') as HTMLInputElement;
+      const message = container.querySelector('textarea[name="message"]') as HTMLTextAreaElement;
+      const subject = container.querySelector('select[name="subject"]') as HTMLSelectElement;
+      fireEvent.change(name, { target: { value: "テスト太郎" } });
+      fireEvent.change(message, { target: { value: "これはテストのメッセージです。" } });
+      fireEvent.change(subject, { target: { value: "PR掲載（特集枠）について" } });
+      await act(async () => {
+        fireEvent.submit(container.querySelector("form")!);
+        await new Promise((r) => setTimeout(r, 20));
+      });
+      expect(container.querySelector('[role="alert"]')).toBeTruthy();
+      expect(submitContactForm).toHaveBeenCalledTimes(1);
+      expect(submitContactForm.mock.calls[0][1].get("name")).toBe("テスト太郎");
+      expect(name.value).toBe("テスト太郎");
+      expect(message.value).toBe("これはテストのメッセージです。");
+      expect(subject.value).toBe("PR掲載（特集枠）について");
+    });
+
+    // SHIG 40/42: the CTA that brought the user here picks the subject.
+    it("preselects the subject from the CTA anchor", () => {
+      window.location.hash = "#contact-pr";
+      const { container } = render(<ContactForm />);
+      const select = container.querySelector('select[name="subject"]') as HTMLSelectElement;
+      expect(select.value).toBe("PR掲載（特集枠）について");
+      act(() => {
+        window.location.hash = "#contact-tool";
+        window.dispatchEvent(new HashChangeEvent("hashchange"));
+      });
+      expect(select.value).toBe("予約・月謝管理ツールの先行案内");
+      window.location.hash = "";
+    });
+
+    it("renders the anchors the owner CTAs point at", () => {
+      const { container } = render(<ContactForm />);
+      expect(container.querySelector("#contact-pr")).toBeTruthy();
+      expect(container.querySelector("#contact-listing")).toBeTruthy();
+      expect(container.querySelector("#contact-tool")).toBeTruthy();
+    });
   });
 });

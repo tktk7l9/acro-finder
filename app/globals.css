@@ -324,6 +324,16 @@ button {
   margin-right: 4px;
   letter-spacing: 0;
 }
+/* The prefecture the list is narrowed to (SHIG 35). */
+.list-count-pref {
+  display: block;
+  font-family: var(--font-jp);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--accent);
+  margin-bottom: 2px;
+}
 .sort-toggle {
   display: flex;
   background: var(--bg-2);
@@ -1798,6 +1808,7 @@ button {
   letter-spacing: 0.14em;
   text-transform: uppercase;
   font-weight: 700;
+  white-space: nowrap; /* "大会" must not break into two lines at 390px (SHIG 85) */
   padding: 2px 8px;
   border-radius: 3px;
   background: var(--bg-2);
@@ -1814,6 +1825,7 @@ button {
   border-radius: 3px;
   font-weight: 600;
   letter-spacing: 0.04em;
+  white-space: nowrap; /* "開催済み" stays on one line at 390px (SHIG 85) */
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -1898,23 +1910,6 @@ button {
   font-size: 10px;
   color: var(--ink-3);
 }
-.event-card-cta {
-  margin-top: auto;
-  background: var(--accent);
-  color: var(--accent-ink);
-  border-radius: 6px;
-  padding: 8px 14px;
-  font-size: 12px;
-  font-weight: 600;
-  text-align: center;
-  transition: opacity .15s;
-}
-.event-card-cta.dim {
-  background: var(--bg-3);
-  color: var(--ink-3);
-  cursor: default;
-}
-.event-card:hover .event-card-cta { opacity: 0.88; }
 
 @media (max-width: 1100px) {
   .featured-event { grid-template-columns: 1fr; }
@@ -2789,6 +2784,13 @@ button {
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
+.skl-empty-hint {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--ink-3);
+  margin: 14px auto 18px;
+  max-width: 36em;
+}
 
 @media (max-width: 1000px) {
   .skl-panel.open { width: 340px; }
@@ -2955,7 +2957,6 @@ button {
     border-top: 1px solid var(--line);
   }
   .capacity-bar { flex: 1 1 120px; }
-  .event-card-cta { margin-top: 0; margin-left: auto; padding: 9px 18px; }
 
   /* Skills — keep genre labels on one line, full-screen detail panel */
   .skl-genre-tab { min-width: 84px; padding: 12px 14px; }
@@ -3168,6 +3169,12 @@ button {
   gap: 16px;
   max-width: 560px;
 }
+/* Targets of the owner-page CTAs; sit at the top of the form, take no space. */
+.form-anchor {
+  display: block;
+  height: 0;
+  scroll-margin-top: 16px;
+}
 .form-honeypot {
   position: absolute;
   left: -9999px;
@@ -3303,7 +3310,46 @@ button {
 }
 .area-section {
   margin-bottom: 30px;
+  scroll-margin-top: 12px;
 }
+/* Prefecture jump list at the top of the index (SHIG 59, 22). */
+.area-jump {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 28px;
+  scroll-margin-top: 12px;
+}
+.area-jump a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  background: var(--bg-2);
+  color: var(--ink-2);
+  font-size: 13px;
+  text-decoration: none;
+  transition: border-color .15s, color .15s;
+}
+.area-jump a:hover { border-color: var(--line-2); color: var(--ink); }
+.area-jump a .count {
+  font-family: var(--font-en);
+  font-size: 11px;
+  color: var(--ink-3);
+}
+.area-back-top {
+  display: inline-block;
+  margin-top: 12px;
+  padding: 8px 0;
+  color: var(--ink-3);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-decoration: none;
+}
+.area-back-top:hover { color: var(--ink); }
 .area-section-head {
   display: flex;
   align-items: baseline;

@@ -139,3 +139,23 @@ export function facilitiesByPrefecture(): AreaGroup[] {
         (order.get(a.prefecture.name) ?? 0) - (order.get(b.prefecture.name) ?? 0),
     );
 }
+
+export interface PrefectureOption {
+  prefecture: Prefecture;
+  count: number;
+}
+
+// Prefectures that have at least one facility, in the canonical north-to-south
+// order, with the facility count. This feeds the map page's prefecture picker:
+// a prefecture with no facility could only produce an empty list (SHIG 13).
+export function prefectureOptions(): PrefectureOption[] {
+  const counts = new Map<string, number>();
+  for (const f of FACILITIES) {
+    const pref = prefectureOf(f);
+    if (pref) counts.set(pref.name, (counts.get(pref.name) ?? 0) + 1);
+  }
+  return PREFECTURES.filter((p) => counts.has(p.name)).map((prefecture) => ({
+    prefecture,
+    count: counts.get(prefecture.name)!,
+  }));
+}

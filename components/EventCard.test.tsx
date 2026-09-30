@@ -21,9 +21,9 @@ describe("EventCard", () => {
     expect(getByText(e.typeLabel)).toBeTruthy();
   });
 
-  it("shows the archive CTA and past styling for past events", () => {
+  it("applies past styling and the 開催済み status for past events", () => {
     const { getByText, container } = render(<EventCard event={ev("e01")} />);
-    expect(getByText("大会情報を見る")).toBeTruthy();
+    expect(getByText("開催済み")).toBeTruthy();
     expect(container.querySelector(".event-card.past")).toBeTruthy();
   });
 
@@ -32,23 +32,40 @@ describe("EventCard", () => {
     expect(getByText(withVenue.venue!)).toBeTruthy();
   });
 
-  it("shows a closed CTA for closed events", () => {
+  it("shows the closed status for closed events", () => {
     const e = { ...ev("e01"), status: "closed" as const };
     const { container } = render(<EventCard event={e} />);
-    expect(container.querySelector(".event-card-cta.dim")?.textContent).toBe("受付終了");
+    expect(container.querySelector(".event-status")?.textContent).toBe("受付終了");
   });
 
-  it("shows the waitlist CTA for full events", () => {
+  // SHIG 37: no event has a link, so there is no button pretending to be one.
+  it("renders no dead call-to-action button", () => {
+    const { container } = render(<EventCard event={ev("e01")} />);
+    expect(container.querySelector(".event-card-cta")).toBeNull();
+    expect(container.textContent).not.toMatch(/詳細・申込|大会情報を見る/);
+    // Without fee or capacity the right column is not drawn at all (no empty bar on phones).
+    if (!ev("e01").fee && ev("e01").capacity == null) {
+      expect(container.querySelector(".event-right")).toBeNull();
+    }
+  });
+
+  // The status pill is the only signal for full / open events now that the
+  // dead CTA is gone (SHIG 37).
+  it("shows the 満員 status for full events without a waitlist button", () => {
     const e = { ...ev("e01"), status: "full" as const };
     const { container } = render(<EventCard event={e} />);
-    expect(container.querySelector(".event-card-cta.dim")?.textContent).toBe("キャンセル待ち");
+    expect(container.querySelector(".event-status")?.textContent).toBe("満員");
+    expect(container.querySelector(".event-status")).toHaveClass("st-full");
+    expect(container.querySelector(".event-card-cta")).toBeNull();
+    expect(screen.queryByText("キャンセル待ち")).toBeNull();
   });
 
-  it("offers signup for an upcoming open event", () => {
+  it("shows the 募集中 status for an upcoming open event without a signup button", () => {
     const e = { ...ev("e01"), date: "2026-09-01", status: undefined };
     const { container } = render(<EventCard event={e} />);
-    expect(container.querySelector(".event-card-cta")).not.toHaveClass("dim");
-    expect(screen.getByText("詳細・申込")).toBeInTheDocument();
+    expect(container.querySelector(".event-status")?.textContent).toBe("募集中");
+    expect(container.querySelector(".event-card-cta")).toBeNull();
+    expect(screen.queryByText("詳細・申込")).toBeNull();
     expect(container.querySelector(".event-card.past")).toBeNull();
   });
 

@@ -186,3 +186,16 @@ describe("FacilityCard", () => {
     expect(container.querySelector(".card.active")).toBeTruthy();
   });
 });
+
+describe("FacilityCard list number (SHIG 5, 11)", () => {
+  // The map pin carries the card's position in the list; the card must show
+  // the same number, not the internal id.
+  it("shows the list position instead of the facility id", () => {
+    const { container } = render(
+      <FacilityCard facility={mission} index={17} active={false} onClick={() => {}} />,
+    );
+    const num = container.querySelector(".card-thumb-num");
+    expect(num?.textContent).toBe("17");
+    expect(container.textContent).not.toContain("F01");
+  });
+});

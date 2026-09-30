@@ -40,3 +40,27 @@ describe("facilities index page", () => {
     expect(metadata.alternates?.canonical).toBe("/facilities");
   });
 });
+
+describe("facilities index (SHIG 59, 22)", () => {
+  // 23 prefectures / 99 cards make a very long page: a jump list at the top
+  // takes the reader straight to their prefecture, and each section links back.
+  it("offers a jump link to every prefecture section", async () => {
+    const { container } = render(await FacilitiesIndexPage());
+    const groups = facilitiesByPrefecture();
+    const links = [...container.querySelectorAll(".area-jump a")];
+    expect(links).toHaveLength(groups.length);
+    for (const a of links) {
+      const href = a.getAttribute("href")!;
+      expect(href).toMatch(/^#area-/);
+      expect(container.querySelector(href)).not.toBeNull();
+    }
+    expect(links[0].textContent).toContain(String(groups[0].facilities.length));
+  });
+
+  it("links back to the jump list from every section", async () => {
+    const { container } = render(await FacilitiesIndexPage());
+    const back = container.querySelectorAll('.area-section a[href="#area-jump"]');
+    expect(back).toHaveLength(facilitiesByPrefecture().length);
+    expect(container.querySelector("#area-jump")).not.toBeNull();
+  });
+});

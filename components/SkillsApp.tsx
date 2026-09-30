@@ -14,6 +14,8 @@ import { TopNav } from "./TopNav";
 import { SKILLS, SKILL_GENRES, type Skill, type SkillGenre } from "@/lib/skills-data";
 import { SkillArt } from "./SkillArt";
 import { SkillGraph } from "./SkillGraph";
+import { normalizeForSearch } from "@/lib/util";
+import { usePanelHistory } from "@/lib/panel-history";
 
 type LayoutMode = "grid" | "list" | "graph";
 
@@ -50,6 +52,11 @@ function loadIds(key: string, known: Record<string, unknown>): string[] {
   }
 }
 
+function isTextEntry(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  return target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName);
+}
+
 export function SkillsApp() {
   const byId = useMemo(() => Object.fromEntries(SKILLS.map((s) => [s.id, s])), []);
 
@@ -60,7 +67,27 @@ export function SkillsApp() {
   const [activeTags, setActiveTags] = useState<Set<string>>(() => new Set());
   const [sort, setSort] = useState<SortKey>("lv-asc");
   const [layout, setLayout] = useState<LayoutMode>("grid");
+  // The open skill is mirrored into `?s=` (hydrated on mount, below) so a
+  // skill can be linked to and the back button closes its panel (SHIG 76, 60).
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const applyUrlState = useCallback(
+    (sp: URLSearchParams): boolean => {
+      const id = sp.get("s");
+      const valid = id !== null && id in byId;
+      setSelectedId(valid ? id : null);
+      return valid;
+    },
+    [byId],
+  );
+  const closePanel = usePanelHistory({
+    panelOpen: selectedId !== null,
+    search: selectedId ? `?s=${encodeURIComponent(selectedId)}` : "",
+    restore: applyUrlState,
+  });
+  const closeSelected = useCallback(
+    () => closePanel(() => setSelectedId(null)),
+    [closePanel],
+  );
   const [showFavOnly, setShowFavOnly] = useState(false);
   const [showDoneOnly, setShowDoneOnly] = useState(false);
   const [comboCollapsed, setComboCollapsed] = useState(false);
@@ -74,6 +101,7 @@ export function SkillsApp() {
   // Load persisted state once on mount (avoids SSR hydration mismatch).
   const loaded = useRef(false);
   useEffect(() => {
+    applyUrlState(new URLSearchParams(window.location.search));
     setFavs(new Set(loadIds("acro_skill_favs", byId)));
     setDones(new Set(loadIds("acro_skill_dones", byId)));
     setCombo(loadIds("acro_skill_combo", byId));
@@ -81,7 +109,7 @@ export function SkillsApp() {
     // folded there so the skill list is what you see first (SHIG 82).
     if (window.matchMedia?.("(max-width: 720px)").matches) setComboCollapsed(true);
     loaded.current = true;
-  }, [byId]);
+  }, [applyUrlState, byId]);
   useEffect(() => {
     if (loaded.current) localStorage.setItem("acro_skill_favs", JSON.stringify([...favs]));
   }, [favs]);
@@ -98,11 +126,12 @@ export function SkillsApp() {
         e.preventDefault();
         document.querySelector<HTMLInputElement>(".skills-app .search input")?.focus();
       }
-      if (e.key === "Escape") setSelectedId(null);
+      // In a text field Esc belongs to the field (a search box clears itself).
+      if (e.key === "Escape" && !isTextEntry(e.target)) closeSelected();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [closeSelected]);
 
   const allTags = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -119,7 +148,8 @@ export function SkillsApp() {
   }, []);
 
   const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
+    // Kana-folded so ひらがな finds カタカナ names (SHIG 50), as on the map page.
+    const q = normalizeForSearch(search.trim());
     const list = SKILLS.filter((s) => {
       if (genre !== "all" && s.genre !== genre) return false;
       if (s.lv < lvMin || s.lv > lvMax) return false;
@@ -127,8 +157,9 @@ export function SkillsApp() {
       if (showFavOnly && !favs.has(s.id)) return false;
       if (showDoneOnly && !dones.has(s.id)) return false;
       if (q) {
-        const blob =
-          `${s.name_ja} ${s.name_en} ${s.id} ${s.tags.join(" ")} ${s.desc_ja} ${s.desc_en}`.toLowerCase();
+        const blob = normalizeForSearch(
+          `${s.name_ja} ${s.name_en} ${s.id} ${s.tags.join(" ")} ${s.desc_ja} ${s.desc_en}`,
+        );
         if (!blob.includes(q)) return false;
       }
       return true;
@@ -178,6 +209,16 @@ export function SkillsApp() {
   };
 
   const selected = selectedId ? byId[selectedId] : null;
+
+  const clearAll = () => {
+    setSearch("");
+    setGenre("all");
+    setLvMin(1);
+    setLvMax(10);
+    setActiveTags(new Set());
+    setShowFavOnly(false);
+    setShowDoneOnly(false);
+  };
 
   return (
     <div className="skills-app">
@@ -262,6 +303,12 @@ export function SkillsApp() {
             <div className="skl-empty">
               <div className="skl-empty-glyph">∅</div>
               <div className="skl-empty-text">該当する技が見つかりません</div>
+              <p className="skl-empty-hint">
+                キーワードを短くするか、ジャンル・難易度・タグの絞り込みを外すと見つかることがあります。
+              </p>
+              <button className="btn" onClick={clearAll}>
+                条件をすべて解除
+              </button>
             </div>
           ) : (
             <div className={`skl-grid${layout === "list" ? " list" : ""}`}>
@@ -288,7 +335,7 @@ export function SkillsApp() {
           isFav={selected ? favs.has(selected.id) : false}
           isDone={selected ? dones.has(selected.id) : false}
           inCombo={combo.length >= COMBO_MAX}
-          onClose={() => setSelectedId(null)}
+          onClose={closeSelected}
           onFav={() => selected && toggleFav(selected.id)}
           onDone={() => selected && toggleDone(selected.id)}
           onAddCombo={() => selected && addToCombo(selected.id)}
@@ -834,7 +881,7 @@ function ComboDock({
                       </div>
                       <div className="skl-combo-slot-name">{s.name_ja}</div>
                       <div className="skl-combo-slot-lv">
-                        Lv.{s.lv} · {s.genre}
+                        Lv.{s.lv} · {SKILL_GENRES.find((g) => g.id === s.genre)?.name_ja ?? s.genre}
                       </div>
                       <button
                         className="skl-combo-slot-x"

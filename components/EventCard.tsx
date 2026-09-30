@@ -12,16 +12,12 @@ export function EventCard({ event }: Props) {
   const dl = event.deadline ? fmtEventDate(event.deadline) : null;
   const st = eventStatus(event);
   const status = EVENT_STATUS[st];
-  const ctaDim = st === "past" || st === "full" || st === "closed";
-  const ctaLabel =
-    st === "past"
-      ? "大会情報を見る"
-      : st === "full"
-        ? "キャンセル待ち"
-        : st === "closed"
-          ? "受付終了"
-          : "詳細・申込";
   const hasBottom = event.venue || event.capacity != null || dl;
+  // No event carries a link yet, so there is no "詳細・申込" button: a button
+  // that does nothing is worse than none (SHIG 37). The status pill already
+  // says 開催済み / 受付終了.
+  const hasRight =
+    event.fee || event.feeNote || (event.capacity != null && event.entered != null);
 
   return (
     <div className={`event-card ${st === "past" ? "past" : ""}`}>
@@ -70,14 +66,15 @@ export function EventCard({ event }: Props) {
           </div>
         )}
       </div>
-      <div className="event-right">
-        {event.fee && <div className="event-fee">{event.fee}</div>}
-        {event.feeNote && <div className="event-fee-note">{event.feeNote}</div>}
-        {event.capacity != null && event.entered != null && (
-          <CapacityBar entered={event.entered} capacity={event.capacity} />
-        )}
-        <div className={`event-card-cta ${ctaDim ? "dim" : ""}`}>{ctaLabel}</div>
-      </div>
+      {hasRight && (
+        <div className="event-right">
+          {event.fee && <div className="event-fee">{event.fee}</div>}
+          {event.feeNote && <div className="event-fee-note">{event.feeNote}</div>}
+          {event.capacity != null && event.entered != null && (
+            <CapacityBar entered={event.entered} capacity={event.capacity} />
+          )}
+        </div>
+      )}
     </div>
   );
 }
