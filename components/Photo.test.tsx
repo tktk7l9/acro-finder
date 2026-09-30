@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { render } from "@testing-library/react";
+import { render, fireEvent } from "@testing-library/react";
 import { Photo } from "./Photo";
 
 describe("Photo", () => {
@@ -57,5 +57,25 @@ describe("Photo", () => {
       <Photo data={{ label: "x", color: "ok-lime" }} src="https://example.test/x.jpg" />,
     );
     expect(container.querySelector("img")?.hasAttribute("crossorigin")).toBe(false);
+  });
+
+  it("falls back to the placeholder when the hotlinked image fails to load", () => {
+    const { container } = render(
+      <Photo
+        data={{ label: "施設A — 写真準備中", color: "ok-slate" }}
+        src="https://example.test/broken.jpg"
+        type="tricking"
+      />,
+    );
+    fireEvent.error(container.querySelector("img")!);
+    expect(container.querySelector("img")).toBeNull();
+    expect(container.querySelector(".photo-glyph")?.textContent).toBe("✦");
+  });
+
+  it("uses a generic glyph for an unknown type", () => {
+    const { container } = render(
+      <Photo data={{ label: "x", color: "ok-slate" }} type="trampoline" />,
+    );
+    expect(container.querySelector(".photo-glyph")?.textContent).toBe("◆");
   });
 });

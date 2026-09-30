@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, fireEvent } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { render, fireEvent, screen, act } from "@testing-library/react";
 
 // The Leaflet map can't run in jsdom — stub it so the page logic is testable.
 // The last props it received are kept so tests can assert what the map is told.
@@ -263,6 +263,112 @@ describe("home page", () => {
       const { container } = render(<Page />);
       expect(container.querySelectorAll(".card .card-fav")).toHaveLength(2);
       localStorage.clear();
+    });
+  });
+
+  describe("geolocation", () => {
+    const button = (container: HTMLElement) =>
+      [...container.querySelectorAll("button")].find((b) =>
+        b.textContent?.includes("現在地"),
+      ) as HTMLButtonElement;
+    const stubGeo = (impl: (ok: PositionCallback, err: PositionErrorCallback) => void) =>
+      Object.defineProperty(navigator, "geolocation", {
+        value: { getCurrentPosition: impl },
+        configurable: true,
+      });
+    const geoError = (code: number) =>
+      ({ code, PERMISSION_DENIED: 1, POSITION_UNAVAILABLE: 2, TIMEOUT: 3 }) as GeolocationPositionError;
+    afterEach(() => Reflect.deleteProperty(navigator, "geolocation"));
+
+    it("says the browser cannot locate when the API is missing", () => {
+      const { container } = render(<Page />);
+      fireEvent.click(button(container));
+      expect(screen.getByRole("status")).toHaveTextContent("このブラウザは位置情報に対応していません");
+    });
+
+    it.each([
+      [1, "位置情報の利用が許可されていません"],
+      [3, "位置情報の取得がタイムアウトしました"],
+      [2, "位置情報を取得できませんでした"],
+    ])("explains geolocation error code %i in plain words", (code, text) => {
+      stubGeo((_ok, err) => err(geoError(code)));
+      const { container } = render(<Page />);
+      fireEvent.click(button(container));
+      expect(screen.getByRole("status")).toHaveTextContent(text);
+      expect(mapProps.current?.showUser).toBe(false);
+      expect(button(container)).toBeEnabled();
+    });
+
+    it("disables the button while locating and ignores a second click", () => {
+      let resolve: PositionCallback = () => {};
+      stubGeo((ok) => (resolve = ok));
+      const { container } = render(<Page />);
+      fireEvent.click(button(container));
+      expect(button(container)).toBeDisabled();
+      expect(button(container).textContent).toContain("現在地を取得中…");
+      fireEvent.click(button(container));
+      act(() => resolve({ coords: { latitude: 35.0, longitude: 135.7 } } as GeolocationPosition));
+      expect(screen.getByRole("status")).toHaveTextContent("現在地を取得しました");
+      expect(screen.getByText("現在地", { selector: ".swatch.you" })).toBeInTheDocument();
+      // Distance sort is picked automatically once a real position exists.
+      const sortBtn = [...container.querySelectorAll("button")].find(
+        (b) => b.textContent?.trim() === "距離",
+      )!;
+      expect(sortBtn).toHaveAttribute("aria-pressed", "true");
+    });
+  });
+
+  describe("map interplay", () => {
+    it("tells the map which prefecture to fly to", () => {
+      const { container } = render(<Page />);
+      const select = container.querySelector(".pref-select") as HTMLSelectElement;
+      fireEvent.change(select, { target: { value: "大阪府" } });
+      expect((mapProps.current?.focusPref as { name: string }).name).toBe("大阪府");
+      expect(select.value).toBe("大阪府");
+      fireEvent.change(select, { target: { value: "" } });
+      expect(mapProps.current?.focusPref).toBeNull();
+    });
+
+    it("opens the panel for a marker picked on the map", () => {
+      const { container } = render(<Page />);
+      act(() => (mapProps.current?.onSelect as (id: string) => void)("f02"));
+      expect(container.querySelector(".detail")).not.toBeNull();
+      expect(container.querySelector('.card[aria-current="true"]')?.getAttribute("data-facility-id")).toBe("f02");
+      expect(new URLSearchParams(window.location.search).get("f")).toBe("f02");
+    });
+
+    it("drops the placeholder once the basemap has drawn", () => {
+      const { container } = render(<Page />);
+      expect(container.querySelector(".map-pane")).toHaveClass("basemap-pending");
+      act(() => (mapProps.current?.onBasemapReady as () => void)());
+      expect(container.querySelector(".map-pane")).not.toHaveClass("basemap-pending");
+    });
+
+    it("stacks equipment filters and clears them in one tap", () => {
+      const { container } = render(<Page />);
+      const all = container.querySelectorAll(".card").length;
+      const chips = container.querySelectorAll(".equipment-filter .eq-chip");
+      fireEvent.click(chips[0]);
+      fireEvent.click(chips[1]);
+      const narrowed = container.querySelectorAll(".card").length;
+      expect(narrowed).toBeLessThan(all);
+      fireEvent.click(chips[0]);
+      expect(container.querySelectorAll(".card").length).toBeGreaterThanOrEqual(narrowed);
+      fireEvent.click(screen.getByText("✕ 解除"));
+      expect(container.querySelectorAll(".card")).toHaveLength(all);
+      expect(screen.queryByText("✕ 解除")).toBeNull();
+    });
+
+    // The card's name is a native <button> (#48), so Enter / Space open it
+    // without a key handler; the panel shows the same facility.
+    it("opens the panel for the facility whose name button was activated", () => {
+      const { container } = render(<Page />);
+      const card = container.querySelector('.card[data-facility-id="f03"]') as HTMLElement;
+      const open = card.querySelector(".card-open") as HTMLButtonElement;
+      expect(open.tagName).toBe("BUTTON");
+      fireEvent.click(open);
+      expect(container.querySelector(".detail-name")?.textContent).toBe(open.textContent);
+      expect(container.querySelector('.card[aria-current="true"]')?.getAttribute("data-facility-id")).toBe("f03");
     });
   });
 });

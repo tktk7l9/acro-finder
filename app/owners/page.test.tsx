@@ -1,0 +1,42 @@
+import { describe, it, expect, vi } from "vitest";
+import { render, screen } from "@testing-library/react";
+
+vi.mock("@/app/owners/actions", () => ({
+  submitContactForm: async () => ({ status: "idle", fieldErrors: {}, formError: null }),
+}));
+
+import OwnersPage, { metadata } from "./page";
+import { FACILITIES } from "@/lib/data";
+import { facilitiesByPrefecture } from "@/lib/areas";
+
+describe("owners page", () => {
+  it("states the current listing size", async () => {
+    render(await OwnersPage());
+    expect(
+      screen.getByText(`${FACILITIES.length}施設・${facilitiesByPrefecture().length}都道府県`),
+    ).toBeInTheDocument();
+  });
+
+  it("offers the three tiers, each pointing at the contact form", async () => {
+    render(await OwnersPage());
+    for (const title of ["無料掲載", "PR掲載（特集枠）", "予約・月謝管理ツール"]) {
+      expect(screen.getByRole("heading", { level: 2, name: title })).toBeInTheDocument();
+    }
+    const ctas = [
+      screen.getByRole("link", { name: "掲載・修正を依頼する" }),
+      screen.getByRole("link", { name: "PR掲載を相談する" }),
+      screen.getByRole("link", { name: "先行案内を希望する" }),
+    ];
+    for (const cta of ctas) expect(cta).toHaveAttribute("href", "#owner-contact");
+    expect(document.getElementById("owner-contact")).not.toBeNull();
+  });
+
+  it("renders the contact form inside the page", async () => {
+    render(await OwnersPage());
+    expect(screen.getByRole("button", { name: "送信する" })).toBeInTheDocument();
+  });
+
+  it("has a canonical URL", () => {
+    expect(metadata.alternates?.canonical).toBe("/owners");
+  });
+});

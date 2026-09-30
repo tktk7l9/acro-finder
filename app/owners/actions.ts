@@ -67,7 +67,9 @@ export async function submitContactForm(
   if (!apiKey || !to) {
     return { status: "error", fieldErrors: {}, formError: "config" };
   }
-  const from = process.env.RESEND_FROM_EMAIL ?? "ACRO/FINDER <onboarding@resend.dev>";
+  // `||`, not `??`: a secret that is set but blank must fall back too, or Resend
+  // is asked to send from "" and every submission fails with a server error.
+  const from = process.env.RESEND_FROM_EMAIL || "ACRO/FINDER <onboarding@resend.dev>";
 
   try {
     const resend = new Resend(apiKey);

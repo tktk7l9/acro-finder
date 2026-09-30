@@ -1,5 +1,7 @@
 import { afterEach } from "vitest";
 import { cleanup } from "@testing-library/react";
+// Registers toBeInTheDocument / toHaveAttribute / toBeDisabled and friends.
+import "@testing-library/jest-dom/vitest";
 
 afterEach(() => cleanup());
 
