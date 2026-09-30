@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeAll, afterAll } from "vitest";
 import type { ReactNode } from "react";
-import { render, fireEvent } from "@testing-library/react";
+import { render, fireEvent, screen } from "@testing-library/react";
 
 vi.mock("next/link", () => ({
   default: ({ children, href }: { children: ReactNode; href: string }) => (
@@ -99,5 +99,39 @@ describe("EventsFeed", () => {
       expect(queryByText("NO EVENTS FOUND")).toBeNull();
       expect(rowByLabel(container, "すべて").getAttribute("aria-pressed")).toBe("true");
     });
+  });
+
+  it("shows only past events, most recent first, under 開催済み", () => {
+    const { container } = render(<EventsFeed />);
+    fireEvent.click(rowByLabel(container, "開催済み"));
+    const cards = container.querySelectorAll(".event-card");
+    expect(cards.length).toBeGreaterThan(0);
+    expect(container.querySelectorAll(".event-card.past")).toHaveLength(cards.length);
+    expect(screen.queryByText("All Japan XTC 2026")).toBeNull();
+    // Month sections run newest → oldest for the archive.
+    const months = [...container.querySelectorAll(".month-divider")].map((m) => m.textContent!);
+    expect(months.length).toBeGreaterThan(1);
+  });
+
+  it("finds an event by its venue", () => {
+    const { container } = render(<EventsFeed />);
+    const input = container.querySelector(".search input") as HTMLInputElement;
+    fireEvent.change(input, { target: { value: "札幌" } });
+    const cards = container.querySelectorAll(".event-card");
+    expect(cards.length).toBeGreaterThan(0);
+    for (const c of cards) expect(c.querySelector(".venue")?.textContent).toContain("札幌");
+    expect(screen.queryByText("NO EVENTS FOUND")).toBeNull();
+  });
+
+  it("combines the type and status filters", () => {
+    const { container } = render(<EventsFeed />);
+    fireEvent.click(rowByLabel(container, "大会"));
+    fireEvent.click(rowByLabel(container, "開催予定"));
+    const cards = container.querySelectorAll(".event-card");
+    expect(cards.length).toBeGreaterThan(0);
+    for (const c of cards) {
+      expect(c.querySelector(".event-type")?.textContent).toBe("大会");
+      expect(c).not.toHaveClass("past");
+    }
   });
 });

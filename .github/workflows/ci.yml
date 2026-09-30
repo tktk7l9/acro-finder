@@ -33,5 +33,5 @@ jobs:
       # Under CSP Level 3, 'strict-dynamic' makes both 'self' and 'unsafe-inline'
       # ignored, and with no nonce or hash in this setup every script on the page stops.
       # The symptom only shows after the production deploy, so stop it here.
-      - run: npm test
+      - run: npm run test:cov
       - run: npm run build
