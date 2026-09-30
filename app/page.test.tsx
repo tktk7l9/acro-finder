@@ -340,6 +340,25 @@ describe("home page", () => {
       back.mockRestore();
     });
 
+    // SHIG 94 × 60: a panel opened from a card closes through history.back(),
+    // so the focus hand-back to the card must wait for the popstate.
+    it("returns focus to the card when a card-opened panel is closed with ✕", async () => {
+      const { container } = render(<Page />);
+      const open = container.querySelector('.card[data-facility-id="f01"] .card-open') as HTMLElement;
+      fireEvent.click(open);
+      expect(document.activeElement?.classList.contains("detail")).toBe(true);
+      (container.querySelector(".detail-close") as HTMLElement).focus();
+      await act(async () => {
+        fireEvent.click(container.querySelector(".detail-close") as HTMLElement);
+        await new Promise((r) => setTimeout(r, 10));
+      });
+      expect(container.querySelector(".detail")).toBeNull();
+      expect(window.location.search).toBe("");
+      expect(document.activeElement).toBe(
+        container.querySelector('.card[data-facility-id="f01"] .card-open'),
+      );
+    });
+
     // SHIG 38: on desktop the search box stays usable beside the open panel,
     // so a query typed then must survive closing the panel (which goes back
     // in history to the entry that predates the query).
