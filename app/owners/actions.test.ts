@@ -13,7 +13,10 @@ vi.mock("resend", () => ({
   },
 }));
 
-import { submitContactForm } from "./actions";
+// The rate-limit buckets live at module level, and the global bucket allows
+// 20 submissions per window across every IP. A fresh module per test keeps a
+// test from being rate-limited by the ones that ran before it.
+let submitContactForm: typeof import("./actions").submitContactForm;
 
 const prev: ContactFormState = { status: "idle", fieldErrors: {}, formError: null };
 
@@ -29,12 +32,11 @@ const valid = {
   message: "掲載情報の修正をお願いします。",
 };
 
-// Each test gets its own client IP so the module-level rate buckets never
-// bleed between tests; the fixed window is 10 minutes.
-let ipCounter = 0;
-beforeEach(() => {
+beforeEach(async () => {
+  vi.resetModules();
+  ({ submitContactForm } = await import("./actions"));
   requestHeaders.clear();
-  requestHeaders.set("x-forwarded-for", `10.0.0.${++ipCounter}, 203.0.113.1`);
+  requestHeaders.set("x-forwarded-for", "10.0.0.1, 203.0.113.1");
   send.mockReset();
   send.mockResolvedValue({ error: null });
   vi.stubEnv("RESEND_API_KEY", "re_test");
@@ -115,6 +117,16 @@ describe("submitContactForm", () => {
     const fourth = await submitContactForm(prev, form(valid));
     expect(fourth).toEqual({ status: "error", fieldErrors: {}, formError: "rate" });
     expect(send).toHaveBeenCalledTimes(3);
+  });
+
+  it("rate-limits the 21st submission in the window even across different IPs", async () => {
+    for (let i = 0; i < 20; i++) {
+      requestHeaders.set("x-forwarded-for", `10.1.${Math.floor(i / 3)}.${i % 3}`);
+      expect((await submitContactForm(prev, form(valid))).status).toBe("success");
+    }
+    requestHeaders.set("x-forwarded-for", "10.2.0.1");
+    expect((await submitContactForm(prev, form(valid))).formError).toBe("rate");
+    expect(send).toHaveBeenCalledTimes(20);
   });
 
   it("falls back to x-real-ip, then to a shared bucket", async () => {

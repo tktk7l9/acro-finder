@@ -71,7 +71,9 @@ describe("EventCard", () => {
     expect(screen.getByText("¥3,000")).toBeInTheDocument();
     expect(screen.getByText("当日 +¥500")).toBeInTheDocument();
     expect(container.querySelector(".event-date .day")).toHaveClass("sat");
-    expect(container.querySelector(".capacity-bar, .cap-bar, [class*=cap]")).toBeTruthy();
+    const bar = container.querySelector(".capacity-bar");
+    expect(bar).toHaveTextContent("12 / 40 名");
+    expect(bar).toHaveTextContent("30%");
   });
 
   it("marks a Sunday date", () => {

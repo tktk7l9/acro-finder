@@ -411,11 +411,23 @@ describe("SkillsApp", () => {
       expect(screen.getByText("★ お気に入り 0")).toBeInTheDocument();
     });
 
-    it("skips a saved id that no longer exists", () => {
-      localStorage.setItem("acro_skill_combo", JSON.stringify(["gone-skill", "back-tuck"]));
+    it("drops a saved id that no longer exists instead of keeping a hidden slot", () => {
+      localStorage.setItem("acro_skill_combo", JSON.stringify(["gone-skill", "back-tuck", 7]));
+      localStorage.setItem("acro_skill_favs", JSON.stringify(["gone-skill", "aerial"]));
       const { container } = render(<SkillsApp />);
       expect(container.querySelectorAll(".skl-combo-slot")).toHaveLength(1);
-      expect(screen.getByText("COMBO BUILDER · 2/12")).toBeInTheDocument();
+      expect(screen.getByText("COMBO BUILDER · 1/12")).toBeInTheDocument();
+      expect(screen.getByText("★ お気に入り 1")).toBeInTheDocument();
+      // The cleaned list is what gets written back.
+      expect(JSON.parse(localStorage.getItem("acro_skill_combo")!)).toEqual(["back-tuck"]);
+    });
+
+    it("ignores saved state that is not a list", () => {
+      localStorage.setItem("acro_skill_combo", JSON.stringify({ id: "back-tuck" }));
+      localStorage.setItem("acro_skill_dones", JSON.stringify("back-tuck"));
+      const { container } = render(<SkillsApp />);
+      expect(container.querySelectorAll(".skl-combo-slot")).toHaveLength(0);
+      expect(screen.getByText("✓ 習得済み 0")).toBeInTheDocument();
     });
 
     it("adding a skill after a clear dismisses the undo notice", () => {

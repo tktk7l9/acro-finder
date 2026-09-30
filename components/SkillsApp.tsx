@@ -36,18 +36,15 @@ function videoSearchUrl(skill: Skill): string {
 
 type SortKey = "lv-asc" | "lv-desc" | "az" | "genre";
 
-function loadSet(key: string): Set<string> {
-  if (typeof window === "undefined") return new Set();
-  try {
-    return new Set(JSON.parse(localStorage.getItem(key) || "[]"));
-  } catch {
-    return new Set();
-  }
-}
-function loadArr(key: string): string[] {
+// Saved state is only trusted when it is an array of ids that still exist:
+// a stale or hand-edited entry would otherwise sit in the combo as an
+// invisible slot that counts toward the limit and cannot be removed.
+function loadIds(key: string, known: Record<string, unknown>): string[] {
   if (typeof window === "undefined") return [];
   try {
-    return JSON.parse(localStorage.getItem(key) || "[]");
+    const parsed: unknown = JSON.parse(localStorage.getItem(key) || "[]");
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((id): id is string => typeof id === "string" && id in known);
   } catch {
     return [];
   }
@@ -77,14 +74,14 @@ export function SkillsApp() {
   // Load persisted state once on mount (avoids SSR hydration mismatch).
   const loaded = useRef(false);
   useEffect(() => {
-    setFavs(loadSet("acro_skill_favs"));
-    setDones(loadSet("acro_skill_dones"));
-    setCombo(loadArr("acro_skill_combo"));
+    setFavs(new Set(loadIds("acro_skill_favs", byId)));
+    setDones(new Set(loadIds("acro_skill_dones", byId)));
+    setCombo(loadIds("acro_skill_combo", byId));
     // On a phone the expanded builder covers a third of the screen; start it
     // folded there so the skill list is what you see first (SHIG 82).
     if (window.matchMedia?.("(max-width: 720px)").matches) setComboCollapsed(true);
     loaded.current = true;
-  }, []);
+  }, [byId]);
   useEffect(() => {
     if (loaded.current) localStorage.setItem("acro_skill_favs", JSON.stringify([...favs]));
   }, [favs]);
