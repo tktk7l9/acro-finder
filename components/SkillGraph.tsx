@@ -141,6 +141,8 @@ export function SkillGraph({
       viewBox={`0 0 ${width} ${height}`}
       width={width}
       height={height}
+      role="group"
+      aria-label="技の相関図"
     >
       {/* Similarity cluster lanes (depth ground axis) */}
       {present.map((c, ci) => {
@@ -205,11 +207,23 @@ export function SkillGraph({
         const p = pos.get(s.id)!;
         const color = GENRE_COLOR[s.genre];
         return (
+          // Each node is a keyboard stop too (SVG <g> takes tabindex), so the
+          // graph is not pointer-only (SHIG 94).
           <g
             key={s.id}
             className={`skl-graph-node${s.id === selectedId ? " sel" : ""}`}
             transform={`translate(${p.x} ${p.y})`}
+            role="button"
+            tabIndex={0}
+            aria-label={`${s.name_ja}（Lv.${s.lv}）の詳細を開く`}
+            aria-pressed={s.id === selectedId}
             onClick={() => onSelect(s.id)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onSelect(s.id);
+              }
+            }}
           >
             <rect width={NODE_W} height={NODE_H} rx={6} />
             <rect width={4} height={NODE_H} rx={2} fill={color} />

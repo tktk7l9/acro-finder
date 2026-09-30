@@ -55,10 +55,41 @@ describe("SkillsApp", () => {
     it("opens a skill from the keyboard", () => {
       const { container } = render(<SkillsApp />);
       const card = container.querySelector(".skl-card") as HTMLElement;
-      expect(card.getAttribute("role")).toBe("button");
-      expect(card.tabIndex).toBe(0);
-      fireEvent.keyDown(card, { key: "Enter" });
+      // The card is not a control itself: its name is a native <button>, so
+      // the ★ / ✓ buttons are not nested inside a role=button.
+      expect(card.getAttribute("role")).toBeNull();
+      const open = card.querySelector(".skl-card-open") as HTMLButtonElement;
+      expect(open.tagName).toBe("BUTTON");
+      fireEvent.click(open);
       expect(container.querySelector(".skl-panel.open")).toBeTruthy();
+    });
+
+    // SHIG 94: the graph nodes are keyboard stops, not pointer-only targets.
+    it("opens a skill from a graph node with Enter", () => {
+      const { container, getByRole } = render(<SkillsApp />);
+      fireEvent.click(getByRole("button", { name: "❖ 相関図" }));
+      const node = container.querySelector(".skl-graph-node") as SVGGElement;
+      expect(node.getAttribute("tabindex")).toBe("0");
+      expect(node.getAttribute("role")).toBe("button");
+      fireEvent.keyDown(node, { key: "Enter" });
+      const name = container.querySelector(".skl-panel.open .skl-sp-name")?.textContent;
+      expect(name).toBeTruthy();
+      expect(node.getAttribute("aria-label")).toContain(name as string);
+      expect(node.getAttribute("aria-pressed")).toBe("true");
+    });
+
+    it("moves the level slider with the arrow keys", () => {
+      const { getByLabelText, getByText } = render(<SkillsApp />);
+      const min = getByLabelText("難易度の下限");
+      expect(min.getAttribute("aria-valuenow")).toBe("1");
+      fireEvent.keyDown(min, { key: "ArrowRight" });
+      expect(min.getAttribute("aria-valuenow")).toBe("2");
+      expect(getByText("Lv.2")).toBeTruthy();
+      fireEvent.keyDown(min, { key: "Home" });
+      expect(min.getAttribute("aria-valuenow")).toBe("1");
+      const max = getByLabelText("難易度の上限");
+      fireEvent.keyDown(max, { key: "ArrowLeft" });
+      expect(max.getAttribute("aria-valuenow")).toBe("9");
     });
 
     it("does not open the card when Enter is pressed on its star button", () => {

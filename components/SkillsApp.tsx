@@ -1,6 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  type KeyboardEvent as ReactKeyboardEvent,
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import Link from "next/link";
 import { TopNav } from "./TopNav";
 import { SKILLS, SKILL_GENRES, type Skill, type SkillGenre } from "@/lib/skills-data";
@@ -189,6 +197,7 @@ export function SkillsApp() {
           <span className="search-icon">⌕</span>
           <input
             type="text"
+            aria-label="技を検索"
             placeholder="技名・タグで検索（⌘K）"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -212,11 +221,12 @@ export function SkillsApp() {
         </div>
       </header>
 
-      <nav className="skl-genrebar">
+      <nav className="skl-genrebar" aria-label="ジャンル">
         {SKILL_GENRES.map((g) => (
           <button
             key={g.id}
             className={`skl-genre-tab${genre === g.id ? " active" : ""}`}
+            aria-pressed={genre === g.id}
             onClick={() => setGenre(g.id)}
           >
             <span className="gt-en">{g.abbr}</span>
@@ -242,7 +252,8 @@ export function SkillsApp() {
         totalCount={SKILLS.length}
       />
 
-      <div className="skl-main">
+      <main className="skl-main">
+        <h1 className="sr-only">技ガイド</h1>
         <div className="skl-gridwrap">
           {layout === "graph" ? (
             <SkillGraph
@@ -286,7 +297,7 @@ export function SkillsApp() {
           onAddCombo={() => selected && addToCombo(selected.id)}
           onJump={(id) => setSelectedId(id)}
         />
-      </div>
+      </main>
 
       <ComboDock
         combo={combo}
@@ -333,6 +344,22 @@ function FilterBar({
 }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<"min" | "max" | null>(null);
+  const sortId = useId();
+
+  // Arrow keys move a thumb one level; Home/End jump to the ends (SHIG 94).
+  const thumbKey = (which: "min" | "max") => (e: ReactKeyboardEvent) => {
+    const cur = which === "min" ? lvMin : lvMax;
+    let next: number | null = null;
+    if (e.key === "ArrowLeft" || e.key === "ArrowDown") next = cur - 1;
+    else if (e.key === "ArrowRight" || e.key === "ArrowUp") next = cur + 1;
+    else if (e.key === "Home") next = 1;
+    else if (e.key === "End") next = 10;
+    if (next === null) return;
+    e.preventDefault();
+    next = Math.max(1, Math.min(10, next));
+    if (which === "min") setLvMin(Math.min(next, lvMax));
+    else setLvMax(Math.max(next, lvMin));
+  };
 
   const handleMove = useCallback(
     (e: MouseEvent | TouchEvent) => {
@@ -365,7 +392,7 @@ function FilterBar({
   const maxPct = ((lvMax - 1) / 9) * 100;
 
   return (
-    <div className="skl-filterbar">
+    <section className="skl-filterbar" aria-label="絞り込み">
       <div className="skl-fb-group">
         <span className="skl-fb-label">難易度</span>
         <div className="skl-lv-range">
@@ -377,15 +404,31 @@ function FilterBar({
             />
             <div
               className="skl-lv-thumb"
+              role="slider"
+              tabIndex={0}
+              aria-label="難易度の下限"
+              aria-valuemin={1}
+              aria-valuemax={10}
+              aria-valuenow={lvMin}
+              aria-valuetext={`Lv.${lvMin}`}
               style={{ left: `${minPct}%` }}
               onMouseDown={() => (dragRef.current = "min")}
               onTouchStart={() => (dragRef.current = "min")}
+              onKeyDown={thumbKey("min")}
             />
             <div
               className="skl-lv-thumb"
+              role="slider"
+              tabIndex={0}
+              aria-label="難易度の上限"
+              aria-valuemin={1}
+              aria-valuemax={10}
+              aria-valuenow={lvMax}
+              aria-valuetext={`Lv.${lvMax}`}
               style={{ left: `${maxPct}%` }}
               onMouseDown={() => (dragRef.current = "max")}
               onTouchStart={() => (dragRef.current = "max")}
+              onKeyDown={thumbKey("max")}
             />
           </div>
           <span className="skl-lv-pill">Lv.{lvMax}</span>
@@ -399,6 +442,7 @@ function FilterBar({
             <button
               key={tag}
               className={`skl-tag-chip${activeTags.has(tag) ? " active" : ""}`}
+              aria-pressed={activeTags.has(tag)}
               onClick={() => toggleTag(tag)}
             >
               {tag}
@@ -408,8 +452,11 @@ function FilterBar({
       </div>
 
       <div className="skl-fb-group">
-        <span className="skl-fb-label">並び</span>
+        <label className="skl-fb-label" htmlFor={sortId}>
+          並び
+        </label>
         <select
+          id={sortId}
           className="skl-select"
           value={sort}
           onChange={(e) => setSort(e.target.value as SortKey)}
@@ -423,21 +470,24 @@ function FilterBar({
 
       <div className="skl-fb-group">
         <span className="skl-fb-label">表示</span>
-        <div className="skl-layout-toggle">
+        <div className="skl-layout-toggle" role="group" aria-label="表示">
           <button
             className={layout === "grid" ? "active" : ""}
+            aria-pressed={layout === "grid"}
             onClick={() => setLayout("grid")}
           >
             ▦ Grid
           </button>
           <button
             className={layout === "list" ? "active" : ""}
+            aria-pressed={layout === "list"}
             onClick={() => setLayout("list")}
           >
             ▤ List
           </button>
           <button
             className={layout === "graph" ? "active" : ""}
+            aria-pressed={layout === "graph"}
             onClick={() => setLayout("graph")}
           >
             ❖ 相関図
@@ -451,7 +501,7 @@ function FilterBar({
         <span className="num">{String(filteredCount).padStart(2, "0")}</span>
         <span className="total"> / {totalCount}</span>
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -479,17 +529,7 @@ function SkillCard({
     <div
       className={`skl-card${selected ? " active" : ""}`}
       onClick={onClick}
-      role="button"
-      tabIndex={0}
-      aria-label={`${skill.name_ja}（Lv.${skill.lv}）の詳細を開く`}
-      onKeyDown={(e) => {
-        // Only the card itself: Enter on the inner ★/✓ buttons is theirs.
-        if (e.target !== e.currentTarget) return;
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onClick();
-        }
-      }}
+      aria-current={selected || undefined}
     >
       <div className="skl-card-media">
         <SkillArt skill={skill} />
@@ -505,6 +545,7 @@ function SkillCard({
             onFav();
           }}
           aria-label="お気に入り"
+          aria-pressed={isFav}
         >
           {isFav ? "★" : "☆"}
         </button>
@@ -515,13 +556,26 @@ function SkillCard({
             onDone();
           }}
           aria-label="習得済み"
+          aria-pressed={isDone}
         >
           ✓
         </button>
       </div>
       <div className="skl-card-body">
         <div className="skl-card-nameblock">
-          <div className="skl-card-name">{skill.name_ja}</div>
+          <div className="skl-card-name">
+            <button
+              type="button"
+              className="skl-card-open"
+              aria-label={`${skill.name_ja}（Lv.${skill.lv}）の詳細を開く`}
+              onClick={(e) => {
+                e.stopPropagation();
+                onClick();
+              }}
+            >
+              {skill.name_ja}
+            </button>
+          </div>
           <div className="skl-card-name-en">{skill.name_en}</div>
         </div>
         {layout === "list" && <div className="skl-card-desc">{skill.desc_ja}</div>}
@@ -561,14 +615,14 @@ function SkillPanel({
   onAddCombo: () => void;
   onJump: (id: string) => void;
 }) {
-  if (!skill) return <aside className="skl-panel" />;
+  if (!skill) return <aside className="skl-panel" aria-label="技の詳細" />;
 
   const genre = SKILL_GENRES.find((g) => g.id === skill.genre);
   const prereqList = skill.prereqs.map((id) => byId[id]).filter(Boolean);
   const leadsList = skill.leads.map((id) => byId[id]).filter(Boolean);
 
   return (
-    <aside className="skl-panel open">
+    <aside className="skl-panel open" aria-label="技の詳細">
       <div className="skl-panel-inner">
         <div className="skl-sp-video">
           <SkillArt skill={skill} />
@@ -591,7 +645,7 @@ function SkillPanel({
             {genre?.name_ja ?? skill.genre}
             <span className="id">ID · {skill.id}</span>
           </div>
-          <div className="skl-sp-name">{skill.name_ja}</div>
+          <h2 className="skl-sp-name">{skill.name_ja}</h2>
           <div className="skl-sp-name-en">{skill.name_en}</div>
         </div>
 
@@ -613,12 +667,14 @@ function SkillPanel({
         <div className="skl-sp-actions">
           <button
             className={`skl-sp-action${isFav ? " active" : ""}`}
+            aria-pressed={isFav}
             onClick={onFav}
           >
             {isFav ? "★" : "☆"} お気に入り
           </button>
           <button
             className={`skl-sp-action${isDone ? " active" : ""}`}
+            aria-pressed={isDone}
             onClick={onDone}
           >
             ✓ 習得済み
@@ -739,9 +795,10 @@ function ComboDock({
   }, [canUndo]);
 
   return (
-    <div className={`skl-combo${collapsed ? " collapsed" : ""}`}>
+    <section className={`skl-combo${collapsed ? " collapsed" : ""}`} aria-label="コンボビルダー">
       <button
         className="skl-combo-toggle"
+        aria-expanded={!collapsed}
         onClick={() => setCollapsed(!collapsed)}
       >
         {collapsed ? "▲ 展開" : "▼ 折りたたみ"}
@@ -813,6 +870,6 @@ function ComboDock({
           </div>
         </>
       )}
-    </div>
+    </section>
   );
 }

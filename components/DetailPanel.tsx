@@ -32,7 +32,9 @@ export function DetailPanel({ facility, onClose, favorite = false, onToggleFavor
   const { links } = facility;
   const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${facility.lat},${facility.lng}`;
   return (
-    <aside className="detail open">
+    // tabIndex -1 lets the page move focus here when a facility is chosen, so
+    // keyboard users land in the panel instead of on the next card (SHIG 94).
+    <aside className="detail open" aria-label="施設の詳細" tabIndex={-1}>
       <div className="detail-hero">
         <Photo data={facility.photos[0]} src={facility.image} type={facility.type} />
         <div className="detail-hero-overlay" />
@@ -67,18 +69,18 @@ export function DetailPanel({ facility, onClose, favorite = false, onToggleFavor
 
       <div className="detail-body">
         <section className="detail-section">
-          <h4 className="detail-section-title">
+          <h3 className="detail-section-title">
             About <span className="jp">施設について</span>
-          </h4>
+          </h3>
           <p style={{ fontSize: 13, color: "var(--ink-2)", lineHeight: 1.7, margin: 0 }}>
             {facility.description}
           </p>
         </section>
 
         <section className="detail-section">
-          <h4 className="detail-section-title">
+          <h3 className="detail-section-title">
             Info <span className="jp">基本情報</span>
-          </h4>
+          </h3>
           <div className="info-grid">
             <div className="info-cell" style={{ gridColumn: "span 2" }}>
               <div className="k">Address / 所在地</div>
@@ -115,18 +117,18 @@ export function DetailPanel({ facility, onClose, favorite = false, onToggleFavor
 
         {facility.hours && (
         <section className="detail-section">
-          <h4 className="detail-section-title">
+          <h3 className="detail-section-title">
             Hours <span className="jp">営業時間</span>
-          </h4>
+          </h3>
           <HoursTable hours={facility.hours} />
         </section>
         )}
 
         {facility.equipment && facility.equipment.length > 0 && (
         <section className="detail-section">
-          <h4 className="detail-section-title">
+          <h3 className="detail-section-title">
             Equipment <span className="jp">設備・器具 ({facility.equipment.length})</span>
-          </h4>
+          </h3>
           <div className="equip-grid">
             {facility.equipment.map((e) => {
               const ef = EQUIPMENT_FILTERS.find((x) => e.includes(x.key));
@@ -143,9 +145,9 @@ export function DetailPanel({ facility, onClose, favorite = false, onToggleFavor
 
         {facility.features && facility.features.length > 0 && (
         <section className="detail-section">
-          <h4 className="detail-section-title">
+          <h3 className="detail-section-title">
             Features <span className="jp">特徴</span>
-          </h4>
+          </h3>
           <div className="feature-list">
             {facility.features.map((f) => (
               <span key={f} className="feature-pill">
@@ -158,12 +160,12 @@ export function DetailPanel({ facility, onClose, favorite = false, onToggleFavor
 
         {facility.lessons && (
         <section className="detail-section">
-          <h4 className="detail-section-title">
+          <h3 className="detail-section-title">
             Lessons <span className="jp">レッスン</span>
             <span className={`section-status ${facility.lessons.available ? "on" : "off"}`}>
               {facility.lessons.available ? "● あり" : "○ なし"}
             </span>
-          </h4>
+          </h3>
           {facility.lessons.available ? (
             <div className="lesson-card">
               <div className="lesson-types">
@@ -196,12 +198,12 @@ export function DetailPanel({ facility, onClose, favorite = false, onToggleFavor
 
         {facility.booking && (
         <section className="detail-section">
-          <h4 className="detail-section-title">
+          <h3 className="detail-section-title">
             Booking <span className="jp">予約</span>
             <span className={`section-status ${facility.booking.required ? "req" : "opt"}`}>
               {facility.booking.required ? "● 要予約" : "○ 予約不要"}
             </span>
-          </h4>
+          </h3>
           <div className="booking-grid">
             <div className="info-cell">
               <div className="k">ウォークイン</div>
@@ -230,9 +232,9 @@ export function DetailPanel({ facility, onClose, favorite = false, onToggleFavor
 
         {facility.payment && facility.payment.length > 0 && (
         <section className="detail-section">
-          <h4 className="detail-section-title">
+          <h3 className="detail-section-title">
             Payment <span className="jp">支払い方法</span>
-          </h4>
+          </h3>
           <div className="pay-grid">
             {facility.payment.map((p) => {
               const meta = PAYMENT_META[p] ?? { icon: "$", class: "pay-other" };
@@ -249,9 +251,9 @@ export function DetailPanel({ facility, onClose, favorite = false, onToggleFavor
 
         {(links.web || links.instagram || links.twitter || links.youtube || links.tiktok) && (
         <section className="detail-section">
-          <h4 className="detail-section-title">
+          <h3 className="detail-section-title">
             Links <span className="jp">公式HP・SNS</span>
-          </h4>
+          </h3>
           <div className="links-list">
             {links.web && (
               <a className="link-row" href={links.web} target="_blank" rel="noreferrer">
