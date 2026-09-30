@@ -109,15 +109,20 @@ describe("facility page", () => {
 
   it("offers official site, directions and the map deep link", async () => {
     await renderPage("f01");
-    expect(screen.getByRole("link", { name: "公式サイト・予約" })).toHaveAttribute(
-      "href",
-      mission.links.web,
-    );
-    expect(screen.getByRole("link", { name: "経路を見る" })).toHaveAttribute(
-      "href",
-      `https://www.google.com/maps/dir/?api=1&destination=${mission.lat},${mission.lng}`,
-    );
-    expect(screen.getByRole("link", { name: "地図で見る" })).toHaveAttribute("href", "/?f=f01");
+    // The CTA row is rendered twice (after the description and at the end),
+    // so every action appears as a pair of identical links.
+    for (const a of screen.getAllByRole("link", { name: "公式サイトで予約" })) {
+      expect(a).toHaveAttribute("href", mission.links.web);
+    }
+    for (const a of screen.getAllByRole("link", { name: "経路を見る" })) {
+      expect(a).toHaveAttribute(
+        "href",
+        `https://www.google.com/maps/dir/?api=1&destination=${mission.lat},${mission.lng}`,
+      );
+    }
+    for (const a of screen.getAllByRole("link", { name: "地図で見る" })) {
+      expect(a).toHaveAttribute("href", "/?f=f01");
+    }
   });
 
   it("shows up to six other facilities in the same prefecture", async () => {
@@ -145,7 +150,7 @@ describe("facility page", () => {
     expect(screen.queryByText("レッスン")).toBeNull();
     expect(screen.queryByText("予約")).toBeNull();
     expect(screen.queryByText("公式サイト・SNS")).toBeNull();
-    expect(screen.queryByRole("link", { name: "公式サイト・予約" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "公式サイトで予約" })).toBeNull();
     expect(screen.queryByText(/の他の施設/)).toBeNull();
     expect(screen.queryByText(/の施設をすべて見る/)).toBeNull();
     expect(screen.getByText(/情報更新 2026-01-02/)).toBeInTheDocument();
@@ -179,6 +184,24 @@ describe("facility page", () => {
     // Only facility in Okinawa → no neighbours section, but still an area link.
     expect(screen.queryByText("沖縄県の他の施設")).toBeNull();
     expect(screen.getByRole("link", { name: "沖縄県の施設をすべて見る →" })).toBeInTheDocument();
+  });
+});
+
+describe("facility page (SHIG 20, 41, 6)", () => {
+  // The actions a visitor came for (book, directions, map) used to sit below
+  // every section, two phone screens down. They now also appear right after
+  // the description, worded exactly as in the map's detail panel.
+  it("puts the primary actions right after the description as well as at the end", async () => {
+    const { container } = await renderPage("f01");
+    const ctas = container.querySelectorAll(".doc-cta");
+    expect(ctas).toHaveLength(2);
+    const first = ctas[0];
+    const firstSection = container.querySelector(".detail-section")!;
+    expect(first.compareDocumentPosition(firstSection) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(first.textContent).toContain("公式サイトで予約");
+    expect(first.textContent).toContain("経路を見る");
+    expect(first.textContent).toContain("地図で見る");
+    expect(container.textContent).not.toContain("公式サイト・予約");
   });
 });
 

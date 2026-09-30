@@ -60,6 +60,25 @@ export default async function FacilityPage({ params }: Props) {
   ];
   const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${facility.lat},${facility.lng}`;
 
+  // The actions a visitor came for. Shown right after the description (the
+  // end of the page is two phone screens down) and again at the end, worded
+  // as in the map's detail panel (SHIG 20, 41, 6).
+  const cta = (
+    <div className="doc-cta">
+      {links.web ? (
+        <a className="btn btn-primary" href={links.web} target="_blank" rel="noreferrer">
+          公式サイトで予約
+        </a>
+      ) : null}
+      <a className="btn" href={directionsUrl} target="_blank" rel="noreferrer">
+        経路を見る
+      </a>
+      <Link className="btn" href={`/?f=${facility.id}`}>
+        地図で見る
+      </Link>
+    </div>
+  );
+
   const socialLinks: { label: string; href: string }[] = [];
   if (links.web) socialLinks.push({ label: "公式ウェブサイト", href: links.web });
   if (links.instagram)
@@ -99,6 +118,7 @@ export default async function FacilityPage({ params }: Props) {
           </div>
         )}
         <p className="doc-lede">{facility.description}</p>
+        {cta}
 
         <section className="detail-section">
           <h2 className="detail-section-title">基本情報</h2>
@@ -257,19 +277,7 @@ export default async function FacilityPage({ params }: Props) {
           </section>
         )}
 
-        <div className="doc-cta">
-          {links.web ? (
-            <a className="btn btn-primary" href={links.web} target="_blank" rel="noreferrer">
-              公式サイト・予約
-            </a>
-          ) : null}
-          <a className="btn" href={directionsUrl} target="_blank" rel="noreferrer">
-            経路を見る
-          </a>
-          <Link className="btn" href={`/?f=${facility.id}`}>
-            地図で見る
-          </Link>
-        </div>
+        {cta}
 
         {nearby.length > 0 && pref && slug && (
           <section className="detail-section">

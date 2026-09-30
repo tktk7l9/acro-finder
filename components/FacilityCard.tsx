@@ -7,12 +7,14 @@ import { InstagramIcon, TiktokIcon, WebIcon, XIcon, YoutubeIcon } from "./SnsIco
 
 interface Props {
   facility: Facility;
+  /** 1-based position in the list — the same number the map pin shows (SHIG 5). */
+  index?: number;
   active: boolean;
   favorite?: boolean;
   onClick: () => void;
 }
 
-function FacilityCardImpl({ facility, active, favorite = false, onClick }: Props) {
+function FacilityCardImpl({ facility, index, active, favorite = false, onClick }: Props) {
   const { links } = facility;
   return (
     // The card itself is not a control: a role=button with focusable SNS links
@@ -27,7 +29,7 @@ function FacilityCardImpl({ facility, active, favorite = false, onClick }: Props
     >
       <div className="card-row">
         <div className="card-thumb">
-          <span className="card-thumb-num">{facility.id.toUpperCase()}</span>
+          {index !== undefined && <span className="card-thumb-num">{index}</span>}
           <Photo data={facility.photos[0]} src={facility.image} type={facility.type} />
         </div>
         <div className="card-body">
@@ -168,6 +170,7 @@ export const FacilityCard = memo(
   FacilityCardImpl,
   (prev, next) =>
     prev.facility === next.facility &&
+    prev.index === next.index &&
     prev.active === next.active &&
     prev.favorite === next.favorite,
 );

@@ -22,12 +22,17 @@ describe("owners page", () => {
     for (const title of ["無料掲載", "PR掲載（特集枠）", "予約・月謝管理ツール"]) {
       expect(screen.getByRole("heading", { level: 2, name: title })).toBeInTheDocument();
     }
-    const ctas = [
-      screen.getByRole("link", { name: "掲載・修正を依頼する" }),
-      screen.getByRole("link", { name: "PR掲載を相談する" }),
-      screen.getByRole("link", { name: "先行案内を希望する" }),
+    // Each CTA lands on its own anchor at the top of the form, which
+    // preselects the matching subject (SHIG 40, 42).
+    const ctas: [string, string][] = [
+      ["掲載・修正を依頼する", "contact-listing"],
+      ["PR掲載を相談する", "contact-pr"],
+      ["先行案内を希望する", "contact-tool"],
     ];
-    for (const cta of ctas) expect(cta).toHaveAttribute("href", "#owner-contact");
+    for (const [name, anchor] of ctas) {
+      expect(screen.getByRole("link", { name })).toHaveAttribute("href", `#${anchor}`);
+      expect(document.getElementById(anchor)).not.toBeNull();
+    }
     expect(document.getElementById("owner-contact")).not.toBeNull();
   });
 

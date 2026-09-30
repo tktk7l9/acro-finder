@@ -2,6 +2,7 @@
 
 import {
   startTransition,
+  useCallback,
   useDeferredValue,
   useEffect,
   useMemo,
@@ -14,11 +15,17 @@ import { TopNav } from "@/components/TopNav";
 import { EQUIPMENT_FILTERS, FACILITIES, TYPE_FILTERS } from "@/lib/data";
 import { EVENTS } from "@/lib/events-data";
 import type { SortKey } from "@/lib/types";
-import { PREFECTURES, type Prefecture } from "@/lib/prefectures";
+import type { Prefecture } from "@/lib/prefectures";
+import { prefectureOf, prefectureOptions } from "@/lib/areas";
 import { haversineKm, normalizeForSearch, priceValue } from "@/lib/util";
 import { loadFavorites, saveFavorites, toggleFavorite } from "@/lib/favorites";
+import { usePanelHistory } from "@/lib/panel-history";
 
 const EVENT_COUNT = EVENTS.length;
+// Only prefectures that have a facility are offered (SHIG 13), with counts.
+const PREF_OPTIONS = prefectureOptions();
+// Facility id -> prefecture name, resolved once for the prefecture filter.
+const PREF_OF = new Map(FACILITIES.map((f) => [f.id, prefectureOf(f)?.name]));
 import { FacilityCard } from "@/components/FacilityCard";
 import { DetailPanel } from "@/components/DetailPanel";
 import { MapPlaceholder } from "@/components/MapPlaceholder";
@@ -76,6 +83,18 @@ export default function Page() {
   // Tokyo Station, and a pin labelled 現在地 there would be a false statement.
   const located = geoState === "active";
 
+  // Apply the URL's `?f=` to state; returns whether a facility panel is open.
+  // Only the panel is restored on back/forward: the search query is not history
+  // (it is written with replaceState), so a query typed while the panel was
+  // open must survive closing it (SHIG 38). The URL is re-synced from state
+  // below when they disagree.
+  const restorePanel = useCallback((sp: URLSearchParams): boolean => {
+    const f = sp.get("f");
+    const id = f && FACILITIES.some((x) => x.id === f) ? f : null;
+    setActiveId(id);
+    return id !== null;
+  }, []);
+
   // Keep the search box responsive: typing updates `query` immediately, while
   // the expensive filter + marker diff run against the deferred value.
   const deferredQuery = useDeferredValue(query);
@@ -92,6 +111,7 @@ export default function Page() {
   const filtered = useMemo(() => {
     const list = facilities.filter((f) => {
       if (typeFilter !== "all" && f.type !== typeFilter) return false;
+      if (focusPref && PREF_OF.get(f.id) !== focusPref.name) return false;
       if (favOnly && !favorites.includes(f.id)) return false;
       if (deferredQuery) {
         const q = normalizeForSearch(deferredQuery);
@@ -111,7 +131,7 @@ export default function Page() {
     if (sort === "distance") list.sort((a, b) => a.distance - b.distance);
     if (sort === "price") list.sort((a, b) => priceValue(a.price) - priceValue(b.price));
     return list;
-  }, [facilities, deferredQuery, typeFilter, equipFilters, sort, favOnly, favorites]);
+  }, [facilities, deferredQuery, typeFilter, equipFilters, sort, favOnly, favorites, focusPref]);
 
   const activeFacility = useMemo(
     () => facilities.find((f) => f.id === activeId) ?? null,
@@ -124,29 +144,24 @@ export default function Page() {
   // context — which keeps it unit-testable in isolation.
   useEffect(() => {
     const sp = new URLSearchParams(window.location.search);
-    const q = sp.get("q");
-    const f = sp.get("f");
-    if (q) setQuery(q);
-    if (f && FACILITIES.some((x) => x.id === f)) setActiveId(f);
+    setQuery(sp.get("q") ?? "");
+    restorePanel(sp);
     // Favourites are read here too (not in a useState initializer) so the
     // server-rendered HTML and the first client render agree.
     setFavorites(loadFavorites());
-  }, []);
+  }, [restorePanel]);
 
-  // Keep the URL in sync with the current view. The first run is skipped so the
-  // mount-time hydration above is not clobbered with the still-default state.
-  const urlSynced = useRef(false);
-  useEffect(() => {
-    if (!urlSynced.current) {
-      urlSynced.current = true;
-      return;
-    }
+  // Keep the URL (and, for the panel, the history) in sync with the view: the
+  // panel covers the whole screen on phones, so the back button closes it
+  // instead of leaving the site (SHIG 60, 82).
+  const search = useMemo(() => {
     const sp = new URLSearchParams();
     if (query) sp.set("q", query);
     if (activeId) sp.set("f", activeId);
     const qs = sp.toString();
-    window.history.replaceState(null, "", qs ? `?${qs}` : window.location.pathname);
+    return qs ? `?${qs}` : "";
   }, [query, activeId]);
+  const closePanel = usePanelHistory({ panelOpen: !!activeId, search, restore: restorePanel });
 
   // Filtering and sorting run inside a Transition so the <ViewTransition> around
   // each card can animate cards entering, leaving and moving. Typing is already
@@ -179,6 +194,15 @@ export default function Page() {
       setTypeFilter("all");
       setEquipFilters([]);
       setFavOnly(false);
+      setFocusPref(null);
+    });
+  };
+
+  // Picking a prefecture narrows the list and moves the map to it, so list and
+  // map keep showing the same facilities (SHIG 35, 24).
+  const selectPref = (name: string) => {
+    startTransition(() => {
+      setFocusPref(PREF_OPTIONS.find((o) => o.prefecture.name === name)?.prefecture ?? null);
     });
   };
 
@@ -212,11 +236,26 @@ export default function Page() {
 
   // Close the detail panel. When focus was inside it (keyboard users), hand it
   // back to the facility's card instead of dropping it on <body> (SHIG 94).
-  const closeDetail = (id: string | null) => {
-    const refocus = focusIsInDetail();
-    setActiveId(null);
-    if (refocus && id) focusCardAfterRender(id);
-  };
+  const closeDetail = useCallback(
+    (id: string | null) => {
+      const refocus = focusIsInDetail();
+      closePanel(() => {
+        setActiveId(null);
+        if (refocus && id) focusCardAfterRender(id);
+      });
+    },
+    [closePanel],
+  );
+
+  // Bring the selected card into view: a pin tapped on the map or a `?f=` deep
+  // link would otherwise highlight a card that sits off-screen in the list
+  // (SHIG 66, 24). `nearest` leaves a card that is already visible alone.
+  useEffect(() => {
+    if (!activeId) return;
+    document
+      .querySelector<HTMLElement>(`.card[data-facility-id="${activeId}"]`)
+      ?.scrollIntoView?.({ block: "nearest" });
+  }, [activeId]);
 
   // Esc closes the detail panel, which covers the whole screen on phones. In a
   // text field Esc belongs to the field (a search box clears itself), so the
@@ -225,13 +264,11 @@ export default function Page() {
     if (!activeId) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Escape" || isTextEntry(e.target)) return;
-      const refocus = focusIsInDetail();
-      setActiveId(null);
-      if (refocus) focusCardAfterRender(activeId);
+      closeDetail(activeId);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [activeId]);
+  }, [activeId, closeDetail]);
 
   const requestGeolocation = () => {
     if (geoState === "locating") return;
@@ -302,16 +339,14 @@ export default function Page() {
         </div>
         <select
           className="pref-select"
-          aria-label="都道府県へ移動"
+          aria-label="都道府県で絞り込む"
           value={focusPref?.name ?? ""}
-          onChange={(e) => {
-            setFocusPref(PREFECTURES.find((p) => p.name === e.target.value) ?? null);
-          }}
+          onChange={(e) => selectPref(e.target.value)}
         >
-          <option value="">都道府県へ移動</option>
-          {PREFECTURES.map((p) => (
-            <option key={p.name} value={p.name}>
-              {p.name}
+          <option value="">すべての都道府県</option>
+          {PREF_OPTIONS.map((o) => (
+            <option key={o.prefecture.name} value={o.prefecture.name}>
+              {o.prefecture.name}（{o.count}）
             </option>
           ))}
         </select>
@@ -338,6 +373,7 @@ export default function Page() {
           <div className="list-header">
             <div className="list-header-top">
               <div className="list-count">
+                {focusPref && <span className="list-count-pref">{focusPref.name}</span>}
                 <strong>{filtered.length}</strong>件の施設
               </div>
               <div className="sort-toggle" role="group" aria-label="並び順">
@@ -389,7 +425,7 @@ export default function Page() {
                 </button>
               </div>
             ) : (
-              filtered.map((f) => (
+              filtered.map((f, i) => (
                 // A stable `name` per facility is what lets React recognise the
                 // same card across a filter or sort change, so a card that only
                 // moved animates to its new position instead of cross-fading as
@@ -398,6 +434,7 @@ export default function Page() {
                 <ViewTransition key={f.id} name={`facility-${f.id}`}>
                   <FacilityCard
                     facility={f}
+                    index={i + 1}
                     active={activeId === f.id}
                     favorite={favorites.includes(f.id)}
                     onClick={() => openDetail(f.id)}

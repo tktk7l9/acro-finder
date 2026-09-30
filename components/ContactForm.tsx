@@ -3,25 +3,25 @@
 import {
   type ChangeEvent,
   type FocusEvent,
+  type FormEvent,
+  startTransition,
   useActionState,
+  useEffect,
   useId,
   useState,
 } from "react";
-import { useFormStatus } from "react-dom";
 import { submitContactForm } from "@/app/owners/actions";
 import {
+  CONTACT_ANCHORS,
+  CONTACT_SUBJECTS,
   type ContactFieldError,
   type ContactFormState,
   initialContactState,
+  subjectForAnchor,
   validateContactField,
 } from "@/lib/contact-state";
 
-const SUBJECTS = [
-  "掲載・修正の依頼",
-  "PR掲載（特集枠）について",
-  "予約・月謝管理ツールの先行案内",
-  "その他",
-];
+const SUBJECTS = CONTACT_SUBJECTS;
 
 const FIELD_ERROR: Record<ContactFieldError, string> = {
   name: "お名前を入力してください",
@@ -38,8 +38,7 @@ const FORM_ERROR = {
 
 type ClientErrors = Partial<Record<ContactFieldError, true>>;
 
-function SubmitButton() {
-  const { pending } = useFormStatus();
+function SubmitButton({ pending }: { pending: boolean }) {
   return (
     <button type="submit" className="btn btn-primary" disabled={pending}>
       {pending ? "送信中…" : "送信する"}
@@ -48,11 +47,41 @@ function SubmitButton() {
 }
 
 export function ContactForm() {
-  const [state, formAction] = useActionState<ContactFormState, FormData>(
+  const [state, formAction, pending] = useActionState<ContactFormState, FormData>(
     submitContactForm,
     initialContactState,
   );
+  // Submitted from onSubmit rather than <form action>: React resets a form
+  // after a form action runs, which after a failed send (mail outage, rate
+  // limit) would put the subject back to its default even though the fields
+  // are controlled (SHIG 38).
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    startTransition(() => formAction(data));
+  };
   const [clientErrors, setClientErrors] = useState<ClientErrors>({});
+  // Controlled so a server-side failure (rate limit, mail outage) leaves what
+  // the user typed in place — React resets uncontrolled fields after an
+  // action, which would wipe the message (SHIG 38).
+  const [values, setValues] = useState({
+    name: "",
+    email: "",
+    subject: SUBJECTS[0] as string,
+    message: "",
+  });
+  const setValue = (field: keyof typeof values, value: string) =>
+    setValues((prev) => ({ ...prev, [field]: value }));
+  // The owner-page CTAs link to per-subject anchors at the top of the form.
+  useEffect(() => {
+    const fromHash = () => {
+      const subject = subjectForAnchor(window.location.hash);
+      if (subject) setValues((prev) => ({ ...prev, subject }));
+    };
+    fromHash();
+    window.addEventListener("hashchange", fromHash);
+    return () => window.removeEventListener("hashchange", fromHash);
+  }, []);
   const nameId = useId();
   const emailId = useId();
   const subjectId = useId();
@@ -102,7 +131,10 @@ export function ContactForm() {
   const formErrorMessage = state.formError ? FORM_ERROR[state.formError] : null;
 
   return (
-    <form action={formAction} noValidate className="form">
+    <form onSubmit={handleSubmit} noValidate className="form">
+      {CONTACT_ANCHORS.map((a) => (
+        <span key={a.id} id={a.id} className="form-anchor" />
+      ))}
       {/* Honeypot — hidden from users, filled only by bots. */}
       <div aria-hidden="true" className="form-honeypot">
         <label htmlFor="website">Leave this field empty</label>
@@ -121,8 +153,12 @@ export function ContactForm() {
           maxLength={100}
           autoComplete="name"
           className="form-input"
+          value={values.name}
           onBlur={handleBlur("name")}
-          onChange={handleChange("name")}
+          onChange={(e) => {
+            setValue("name", e.target.value);
+            handleChange("name")(e);
+          }}
           aria-invalid={hasError("name") || undefined}
           aria-describedby={hasError("name") ? `${nameId}-error` : undefined}
         />
@@ -145,8 +181,12 @@ export function ContactForm() {
           maxLength={254}
           autoComplete="email"
           className="form-input"
+          value={values.email}
           onBlur={handleBlur("email")}
-          onChange={handleChange("email")}
+          onChange={(e) => {
+            setValue("email", e.target.value);
+            handleChange("email")(e);
+          }}
           aria-invalid={hasError("email") || undefined}
           aria-describedby={hasError("email") ? `${emailId}-error` : undefined}
         />
@@ -161,7 +201,13 @@ export function ContactForm() {
         <label htmlFor={subjectId} className="form-label">
           ご用件 <span className="req">必須</span>
         </label>
-        <select id={subjectId} name="subject" className="form-select" defaultValue={SUBJECTS[0]}>
+        <select
+          id={subjectId}
+          name="subject"
+          className="form-select"
+          value={values.subject}
+          onChange={(e) => setValue("subject", e.target.value)}
+        >
           {SUBJECTS.map((s) => (
             <option key={s} value={s}>
               {s}
@@ -183,8 +229,12 @@ export function ContactForm() {
           rows={6}
           className="form-textarea"
           placeholder="施設名・ご相談内容など"
+          value={values.message}
           onBlur={handleBlur("message")}
-          onChange={handleChange("message")}
+          onChange={(e) => {
+            setValue("message", e.target.value);
+            handleChange("message")(e);
+          }}
           aria-invalid={hasError("message") || undefined}
           aria-describedby={hasError("message") ? `${messageId}-error` : undefined}
         />
@@ -201,7 +251,7 @@ export function ContactForm() {
         </p>
       )}
 
-      <SubmitButton />
+      <SubmitButton pending={pending} />
     </form>
   );
 }

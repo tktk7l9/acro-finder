@@ -27,3 +27,15 @@ describe("validateContactField", () => {
     expect(initialContactState.formError).toBeNull();
   });
 });
+
+describe("subjectForAnchor (SHIG 40, 42)", () => {
+  it("maps each CTA anchor to its subject", async () => {
+    const { CONTACT_ANCHORS, CONTACT_SUBJECTS, subjectForAnchor } = await import("./contact-state");
+    for (const a of CONTACT_ANCHORS) {
+      expect(CONTACT_SUBJECTS).toContain(subjectForAnchor(`#${a.id}`));
+    }
+    expect(subjectForAnchor("#contact-pr")).toBe("PR掲載（特集枠）について");
+    expect(subjectForAnchor("#owner-contact")).toBeUndefined();
+    expect(subjectForAnchor("")).toBeUndefined();
+  });
+});

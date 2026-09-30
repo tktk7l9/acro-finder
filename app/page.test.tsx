@@ -12,6 +12,7 @@ vi.mock("@/components/InteractiveMap", () => ({
 }));
 
 import Page from "./page";
+import { facilitiesInPrefecture, prefectureOptions } from "@/lib/areas";
 
 describe("home page", () => {
   // The page reads/writes ?q= and ?f= on the URL; reset it between tests so
@@ -263,6 +264,148 @@ describe("home page", () => {
       const { container } = render(<Page />);
       expect(container.querySelectorAll(".card .card-fav")).toHaveLength(2);
       localStorage.clear();
+    });
+
+    // ── 2nd round ──
+
+    // SHIG 5/11: the map pin shows the card's list position, so the card must
+    // carry the same number (not the internal id).
+    it("numbers cards in list order to match the map pins", () => {
+      const { container } = render(<Page />);
+      const nums = [...container.querySelectorAll(".card-thumb-num")].map((n) => n.textContent);
+      expect(nums.slice(0, 3)).toEqual(["1", "2", "3"]);
+      expect(container.textContent).not.toMatch(/\bF\d{2}\b/);
+    });
+
+    // SHIG 35/24: the prefecture picker narrows the list as well as moving
+    // the map, so list and map show the same facilities.
+    it("filters the list to the chosen prefecture and moves the map there", () => {
+      const { container } = render(<Page />);
+      const select = container.querySelector(".pref-select") as HTMLSelectElement;
+      fireEvent.change(select, { target: { value: "神奈川県" } });
+      const cards = container.querySelectorAll(".card");
+      expect(cards.length).toBe(facilitiesInPrefecture("神奈川県").length);
+      expect(cards.length).toBeGreaterThan(0);
+      expect((mapProps.current?.focusPref as { name: string })?.name).toBe("神奈川県");
+      expect(container.querySelector(".list-count")?.textContent).toContain("神奈川県");
+    });
+
+    // SHIG 13: a prefecture with no facility can only produce an empty list.
+    it("offers only prefectures that have facilities, with their counts", () => {
+      const { container } = render(<Page />);
+      const options = [...container.querySelectorAll(".pref-select option")];
+      const names = options.map((o) => (o as HTMLOptionElement).value).filter(Boolean);
+      expect(names).toEqual(prefectureOptions().map((o) => o.prefecture.name));
+      expect(names).not.toContain("秋田県");
+      const kanagawa = options.find((o) => (o as HTMLOptionElement).value === "神奈川県");
+      expect(kanagawa?.textContent).toContain(String(facilitiesInPrefecture("神奈川県").length));
+    });
+
+    it("drops the prefecture filter with 条件をすべて解除", () => {
+      const { container } = render(<Page />);
+      const select = container.querySelector(".pref-select") as HTMLSelectElement;
+      fireEvent.change(select, { target: { value: "神奈川県" } });
+      const input = container.querySelector(".search input") as HTMLInputElement;
+      fireEvent.change(input, { target: { value: "zzz-no-such-facility" } });
+      fireEvent.click(button(container, "条件をすべて解除")!);
+      expect(select.value).toBe("");
+      expect(container.querySelectorAll(".card")).toHaveLength(99);
+    });
+
+    // SHIG 60/82: the panel covers the phone screen, so the back button must
+    // close it rather than leave the site.
+    it("closes the detail panel with the browser back button", async () => {
+      const { container } = render(<Page />);
+      fireEvent.click(container.querySelector(".card") as HTMLElement);
+      expect(container.querySelector(".detail")).not.toBeNull();
+      expect(window.location.search).toMatch(/^\?f=/);
+      await act(async () => {
+        window.history.back();
+        await new Promise((r) => setTimeout(r, 10));
+      });
+      expect(container.querySelector(".detail")).toBeNull();
+      expect(window.location.search).toBe("");
+    });
+
+    it("leaves no stale history entry when the panel is closed with ✕", async () => {
+      const back = vi.spyOn(window.history, "back");
+      const { container } = render(<Page />);
+      fireEvent.click(container.querySelector(".card") as HTMLElement);
+      await act(async () => {
+        fireEvent.click(container.querySelector(".detail-close") as HTMLElement);
+        await new Promise((r) => setTimeout(r, 10));
+      });
+      expect(back).toHaveBeenCalledTimes(1);
+      expect(container.querySelector(".detail")).toBeNull();
+      back.mockRestore();
+    });
+
+    // SHIG 94 × 60: a panel opened from a card closes through history.back(),
+    // so the focus hand-back to the card must wait for the popstate.
+    it("returns focus to the card when a card-opened panel is closed with ✕", async () => {
+      const { container } = render(<Page />);
+      const open = container.querySelector('.card[data-facility-id="f01"] .card-open') as HTMLElement;
+      fireEvent.click(open);
+      expect(document.activeElement?.classList.contains("detail")).toBe(true);
+      (container.querySelector(".detail-close") as HTMLElement).focus();
+      await act(async () => {
+        fireEvent.click(container.querySelector(".detail-close") as HTMLElement);
+        await new Promise((r) => setTimeout(r, 10));
+      });
+      expect(container.querySelector(".detail")).toBeNull();
+      expect(window.location.search).toBe("");
+      expect(document.activeElement).toBe(
+        container.querySelector('.card[data-facility-id="f01"] .card-open'),
+      );
+    });
+
+    // SHIG 38: on desktop the search box stays usable beside the open panel,
+    // so a query typed then must survive closing the panel (which goes back
+    // in history to the entry that predates the query).
+    it("keeps a query typed while the panel was open after closing it", async () => {
+      const { container } = render(<Page />);
+      fireEvent.click(container.querySelector(".card") as HTMLElement);
+      const input = container.querySelector(".search input") as HTMLInputElement;
+      fireEvent.change(input, { target: { value: "MISSION" } });
+      expect(container.querySelectorAll(".card")).toHaveLength(2);
+      await act(async () => {
+        fireEvent.click(container.querySelector(".detail-close") as HTMLElement);
+        await new Promise((r) => setTimeout(r, 10));
+      });
+      expect(container.querySelector(".detail")).toBeNull();
+      expect(input.value).toBe("MISSION");
+      expect(container.querySelectorAll(".card")).toHaveLength(2);
+      expect(window.location.search).toBe("?q=MISSION");
+    });
+
+    it("does not navigate back when closing a deep-linked panel", () => {
+      window.history.replaceState(null, "", "/?f=f01");
+      const back = vi.spyOn(window.history, "back");
+      const { container } = render(<Page />);
+      fireEvent.click(container.querySelector(".detail-close") as HTMLElement);
+      expect(back).not.toHaveBeenCalled();
+      expect(container.querySelector(".detail")).toBeNull();
+      expect(window.location.search).toBe("");
+      back.mockRestore();
+    });
+
+    // SHIG 66/24: a facility picked on the map (or via ?f=) is brought into
+    // view in the list, so the highlighted card is actually visible.
+    it("scrolls the selected card into view", () => {
+      const scrolled: Element[] = [];
+      const orig = Element.prototype.scrollIntoView;
+      Element.prototype.scrollIntoView = function () {
+        scrolled.push(this);
+      };
+      try {
+        const { container } = render(<Page />);
+        expect(scrolled).toHaveLength(0);
+        act(() => (mapProps.current?.onSelect as (id: string) => void)("f31"));
+        const card = container.querySelector('.card[data-facility-id="f31"]');
+        expect(scrolled).toContain(card);
+      } finally {
+        Element.prototype.scrollIntoView = orig;
+      }
     });
   });
 
