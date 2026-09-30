@@ -207,6 +207,18 @@ describe("home page", () => {
       expect(document.activeElement?.classList.contains("detail")).toBe(true);
     });
 
+    it("moves focus into the panel again when the open facility is re-activated", () => {
+      const { container } = render(<Page />);
+      const open = container.querySelector('.card[data-facility-id="f01"] .card-open') as HTMLElement;
+      fireEvent.click(open);
+      expect(document.activeElement?.classList.contains("detail")).toBe(true);
+      // Tab back to the card, then activate it once more: no state changes.
+      open.focus();
+      expect(document.activeElement).toBe(open);
+      fireEvent.click(open);
+      expect(document.activeElement?.classList.contains("detail")).toBe(true);
+    });
+
     it("does not steal focus when the panel is restored from the URL", () => {
       window.history.replaceState(null, "", "/?f=f01");
       const { container } = render(<Page />);

@@ -185,14 +185,21 @@ export default function Page() {
   // Opening from a card or a marker also moves focus into the panel; a link
   // with ?f= restores the panel without stealing focus.
   const focusDetailOnOpen = useRef(false);
+  const focusDetail = () => document.querySelector<HTMLElement>(".detail")?.focus();
   const openDetail = (id: string) => {
+    // Re-opening the facility already shown re-renders nothing, so the effect
+    // below would not run: move focus right away instead.
+    if (id === activeId) {
+      focusDetail();
+      return;
+    }
     focusDetailOnOpen.current = true;
     setActiveId(id);
   };
   useEffect(() => {
     if (!activeId || !focusDetailOnOpen.current) return;
     focusDetailOnOpen.current = false;
-    document.querySelector<HTMLElement>(".detail")?.focus();
+    focusDetail();
   }, [activeId]);
 
   const toggleFav = (id: string) => {

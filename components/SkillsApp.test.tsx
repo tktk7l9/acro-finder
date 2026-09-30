@@ -64,6 +64,20 @@ describe("SkillsApp", () => {
       expect(container.querySelector(".skl-panel.open")).toBeTruthy();
     });
 
+    // SHIG 94: the graph nodes are keyboard stops, not pointer-only targets.
+    it("opens a skill from a graph node with Enter", () => {
+      const { container, getByRole } = render(<SkillsApp />);
+      fireEvent.click(getByRole("button", { name: "❖ 相関図" }));
+      const node = container.querySelector(".skl-graph-node") as SVGGElement;
+      expect(node.getAttribute("tabindex")).toBe("0");
+      expect(node.getAttribute("role")).toBe("button");
+      fireEvent.keyDown(node, { key: "Enter" });
+      const name = container.querySelector(".skl-panel.open .skl-sp-name")?.textContent;
+      expect(name).toBeTruthy();
+      expect(node.getAttribute("aria-label")).toContain(name as string);
+      expect(node.getAttribute("aria-pressed")).toBe("true");
+    });
+
     it("moves the level slider with the arrow keys", () => {
       const { getByLabelText, getByText } = render(<SkillsApp />);
       const min = getByLabelText("難易度の下限");
