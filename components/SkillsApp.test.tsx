@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { StrictMode } from "react";
 import { render, fireEvent, screen, within, act } from "@testing-library/react";
 import { SkillsApp } from "./SkillsApp";
 import { SKILLS } from "@/lib/skills-data";
@@ -496,6 +497,41 @@ describe("SkillsApp", () => {
       expect(container.querySelectorAll(".skl-combo-slot")).toHaveLength(2);
       expect(screen.getByText("★ お気に入り 1")).toBeInTheDocument();
       expect(screen.getByText("✓ 習得済み 2")).toBeInTheDocument();
+    });
+
+    // `next dev` wraps the tree in StrictMode, which mounts, unmounts and
+    // re-mounts every component. The first mount must not write the not-yet-
+    // hydrated defaults to storage, or the re-mount reads back an empty list
+    // and a reload wipes what was saved.
+    it("survives a StrictMode double mount without losing saved state", () => {
+      localStorage.setItem("acro_skill_combo", JSON.stringify(["back-tuck", "aerial"]));
+      localStorage.setItem("acro_skill_favs", JSON.stringify(["aerial"]));
+      localStorage.setItem("acro_skill_dones", JSON.stringify(["round-off", "aerial"]));
+      const { container } = render(
+        <StrictMode>
+          <SkillsApp />
+        </StrictMode>,
+      );
+      expect(container.querySelectorAll(".skl-combo-slot")).toHaveLength(2);
+      expect(screen.getByText("★ お気に入り 1")).toBeInTheDocument();
+      expect(screen.getByText("✓ 習得済み 2")).toBeInTheDocument();
+      expect(JSON.parse(localStorage.getItem("acro_skill_combo")!)).toEqual(["back-tuck", "aerial"]);
+      expect(JSON.parse(localStorage.getItem("acro_skill_favs")!)).toEqual(["aerial"]);
+      expect(JSON.parse(localStorage.getItem("acro_skill_dones")!)).toEqual(["round-off", "aerial"]);
+    });
+
+    it("never writes the pre-hydration defaults to storage", () => {
+      localStorage.setItem("acro_skill_combo", JSON.stringify(["back-tuck"]));
+      const setItem = vi.spyOn(Storage.prototype, "setItem");
+      try {
+        render(<SkillsApp />);
+        const comboWrites = setItem.mock.calls
+          .filter(([key]) => key === "acro_skill_combo")
+          .map(([, value]) => value);
+        expect(comboWrites).not.toContain("[]");
+      } finally {
+        setItem.mockRestore();
+      }
     });
 
     it("ignores corrupt saved state", () => {

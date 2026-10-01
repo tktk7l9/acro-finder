@@ -99,7 +99,13 @@ export function SkillsApp() {
   const [combo, setCombo] = useState<string[]>([]);
 
   // Load persisted state once on mount (avoids SSR hydration mismatch).
-  const loaded = useRef(false);
+  // `hydrated` is state, not a ref: the save effects below run in the same
+  // commit as this one, and a ref flipped here would already be true for them,
+  // so they would write the still-empty defaults over what was just read.
+  // Under StrictMode (next dev) the re-mount then reads that empty list back
+  // and a reload loses the saved combo. As state, the flag only becomes true
+  // in the render that also carries the loaded values.
+  const [hydrated, setHydrated] = useState(false);
   useEffect(() => {
     applyUrlState(new URLSearchParams(window.location.search));
     setFavs(new Set(loadIds("acro_skill_favs", byId)));
@@ -108,17 +114,17 @@ export function SkillsApp() {
     // On a phone the expanded builder covers a third of the screen; start it
     // folded there so the skill list is what you see first (SHIG 82).
     if (window.matchMedia?.("(max-width: 720px)").matches) setComboCollapsed(true);
-    loaded.current = true;
+    setHydrated(true);
   }, [applyUrlState, byId]);
   useEffect(() => {
-    if (loaded.current) localStorage.setItem("acro_skill_favs", JSON.stringify([...favs]));
-  }, [favs]);
+    if (hydrated) localStorage.setItem("acro_skill_favs", JSON.stringify([...favs]));
+  }, [hydrated, favs]);
   useEffect(() => {
-    if (loaded.current) localStorage.setItem("acro_skill_dones", JSON.stringify([...dones]));
-  }, [dones]);
+    if (hydrated) localStorage.setItem("acro_skill_dones", JSON.stringify([...dones]));
+  }, [hydrated, dones]);
   useEffect(() => {
-    if (loaded.current) localStorage.setItem("acro_skill_combo", JSON.stringify(combo));
-  }, [combo]);
+    if (hydrated) localStorage.setItem("acro_skill_combo", JSON.stringify(combo));
+  }, [hydrated, combo]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
