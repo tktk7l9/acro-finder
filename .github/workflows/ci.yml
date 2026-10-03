@@ -23,7 +23,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: npm audit
-        run: npm audit --audit-level=low
+        run: node scripts/audit-gate.mjs
       - run: npm run typecheck
       # In Next 16, next build does not run lint. Without this step lint runs
       # nowhere, so run it here (ai-primer / service-anatomy do not have it

@@ -1,0 +1,9 @@
+[
+  {
+    "id": "GHSA-vfj7-8cjw-p6xm",
+    "package": "braces",
+    "devOnly": true,
+    "expires": "2026-11-03",
+    "reason": "No patched version exists (<= 3.0.3 affected). Reached only through eslint-config-next > @next/eslint-plugin-next > fast-glob > micromatch at lint time, with patterns written in this repository; not shipped to production."
+  }
+]
