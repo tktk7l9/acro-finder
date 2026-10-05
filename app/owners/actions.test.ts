@@ -129,6 +129,17 @@ describe("submitContactForm", () => {
     expect(send).toHaveBeenCalledTimes(20);
   });
 
+  it("keys the per-IP limit on cf-connecting-ip, ignoring a rotated x-forwarded-for", async () => {
+    requestHeaders.set("cf-connecting-ip", "203.0.113.9");
+    for (let i = 0; i < 3; i++) {
+      requestHeaders.set("x-forwarded-for", `10.3.0.${i}`);
+      expect((await submitContactForm(prev, form(valid))).status).toBe("success");
+    }
+    requestHeaders.set("x-forwarded-for", "10.3.0.99");
+    expect((await submitContactForm(prev, form(valid))).formError).toBe("rate");
+    expect(send).toHaveBeenCalledTimes(3);
+  });
+
   it("falls back to x-real-ip, then to a shared bucket", async () => {
     requestHeaders.clear();
     requestHeaders.set("x-real-ip", "198.51.100.7");
