@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { FACILITIES } from "@/lib/data";
 import { prefectureOf, slugForPrefecture, sameAreaFacilities } from "@/lib/areas";
 import { facilityJsonLd, breadcrumbJsonLd } from "@/lib/jsonld";
-import { SITE_URL } from "@/lib/site";
+import { SITE_NAME, SITE_URL } from "@/lib/site";
 import { SiteHeader } from "@/components/SiteHeader";
 import { Breadcrumb, type Crumb } from "@/components/Breadcrumb";
 import { FacilityLink } from "@/components/FacilityLink";
@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       type: "article",
       url: canonical,
-      title: `${title} · ACRO/FINDER`,
+      title: `${title} · ${SITE_NAME}`,
       description,
       ...(facility.image ? { images: [facility.image] } : {}),
     },

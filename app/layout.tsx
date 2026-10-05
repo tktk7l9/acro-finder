@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter_Tight, JetBrains_Mono, Zen_Kaku_Gothic_New } from "next/font/google";
-import { SITE_URL } from "@/lib/site";
+import { SITE_NAME, SITE_URL } from "@/lib/site";
 import { SnsIconSprite } from "@/components/SnsIcons";
 import "./globals.css";
 
@@ -24,7 +24,7 @@ const fontJp = Zen_Kaku_Gothic_New({
   preload: false,
 });
 
-const TITLE = "ACRO/FINDER · アクロバット練習施設マップ";
+const TITLE = `${SITE_NAME} · アクロバット練習施設マップ`;
 const DESCRIPTION =
   "トリッキング・パルクール・体操などアクロバットを練習できる施設を地図とリストで検索。営業時間・設備・器具・レッスン・予約・支払い方法、現在地からの距離まで一覧で確認できます。";
 
@@ -32,10 +32,10 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
     default: TITLE,
-    template: "%s · ACRO/FINDER",
+    template: `%s · ${SITE_NAME}`,
   },
   description: DESCRIPTION,
-  applicationName: "ACRO/FINDER",
+  applicationName: SITE_NAME,
   keywords: [
     "トリッキング",
     "パルクール",
@@ -46,12 +46,12 @@ export const metadata: Metadata = {
     "フリーランニング",
     "施設検索",
   ],
-  authors: [{ name: "ACRO/FINDER" }],
+  authors: [{ name: SITE_NAME }],
   openGraph: {
     type: "website",
     locale: "ja_JP",
     url: SITE_URL,
-    siteName: "ACRO/FINDER",
+    siteName: SITE_NAME,
     title: TITLE,
     description: DESCRIPTION,
   },
