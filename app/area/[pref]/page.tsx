@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { prefectureBySlug, facilitiesInPrefecture, prefectureSummary } from "@/lib/areas";
 import { breadcrumbJsonLd, itemListJsonLd } from "@/lib/jsonld";
-import { SITE_URL } from "@/lib/site";
+import { SITE_NAME, SITE_URL } from "@/lib/site";
 import { SiteHeader } from "@/components/SiteHeader";
 import { Breadcrumb, type Crumb } from "@/components/Breadcrumb";
 import { FacilityLink } from "@/components/FacilityLink";
@@ -42,7 +42,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       type: "website",
       url: `/area/${slug}`,
-      title: `${title} · ACRO/FINDER`,
+      title: `${title} · ${SITE_NAME}`,
       description,
     },
   };
