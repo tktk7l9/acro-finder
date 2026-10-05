@@ -33,3 +33,6 @@ next-env.d.ts
 # @opennextjs/cloudflare build output / wrangler local state
 .open-next/
 .wrangler/
+# wrangler local secrets
+.dev.vars
+.dev.vars.*

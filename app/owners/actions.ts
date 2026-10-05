@@ -28,7 +28,15 @@ function takeRateSlot(key: string, limit: number): boolean {
 
 async function isRateLimited(): Promise<boolean> {
   const h = await headers();
-  const ip = h.get("x-forwarded-for")?.split(",")[0]?.trim() ?? h.get("x-real-ip") ?? "unknown";
+  // cf-connecting-ip is set by Cloudflare and cannot be forged by the client. The first
+  // x-forwarded-for entry is whatever the client sent (Cloudflare appends to it), so it
+  // only serves as a fallback for local dev; trusting it first let a bot rotate the
+  // header to dodge the per-IP limit.
+  const ip =
+    h.get("cf-connecting-ip")?.trim() ||
+    h.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    h.get("x-real-ip") ||
+    "unknown";
   if (!takeRateSlot("contact:global", RATE_LIMIT.global)) return true;
   return !takeRateSlot(`contact:ip:${ip}`, RATE_LIMIT.perIp);
 }
