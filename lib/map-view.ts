@@ -93,7 +93,7 @@ export function placeholderGeometry(bounds = JAPAN_BOUNDS) {
 // neither a reliable tap target (SHIG 13, 78; Lighthouse target-size). A wider
 // radius there merges such neighbours; closer in, the tighter radius keeps
 // dense city areas split up as before.
-export const WIDE_VIEW_MAX_ZOOM = 6;
+const WIDE_VIEW_MAX_ZOOM = 6;
 
 export function clusterRadius(zoom: number): number {
   return zoom <= WIDE_VIEW_MAX_ZOOM ? 80 : 52;
