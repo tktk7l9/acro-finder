@@ -39,6 +39,11 @@ const config = [
       // would cause SSR hydration mismatches. Keep visibility as a warning
       // rather than disabling entirely.
       "react-hooks/set-state-in-effect": "warn",
+      // Pages are served as Workers static assets (scripts/export-static.mjs), which
+      // answer by path and ignore the query, so an RSC prefetch or client-side
+      // navigation through next/link would get the HTML page back. Internal links are
+      // therefore plain <a> elements, which this rule would reject.
+      "@next/next/no-html-link-for-pages": "off",
     },
   },
 ];

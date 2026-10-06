@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { contentSecurityPolicy } from "./csp";
+import { createHash } from "node:crypto";
+import {
+  contentSecurityPolicy,
+  headersFile,
+  inlineScriptHashes,
+  securityHeaders,
+  withCspMeta,
+} from "./csp";
 
 describe("contentSecurityPolicy", () => {
   const prod = contentSecurityPolicy();
@@ -70,5 +77,85 @@ describe("contentSecurityPolicy", () => {
   it("separates directives with ; and adds no trailing ;", () => {
     expect(prod.endsWith(";")).toBe(false);
     expect(prod).not.toContain(";;");
+  });
+});
+
+describe("contentSecurityPolicy with script hashes", () => {
+  const hashed = contentSecurityPolicy({ scriptHashes: ["sha256-AAA=", "sha256-BBB="] });
+
+  it("replaces 'unsafe-inline' in script-src with the listed hashes", () => {
+    expect(hashed).toContain(
+      "script-src 'self' 'sha256-AAA=' 'sha256-BBB=' https://static.cloudflareinsights.com;",
+    );
+    expect(hashed).not.toContain("'unsafe-inline' https://static");
+    // style-src keeps 'unsafe-inline' (Leaflet positions tiles with inline styles).
+    expect(hashed).toContain("style-src 'self' 'unsafe-inline'");
+  });
+
+  it("leaves frame-ancestors out of a <meta> policy, where browsers ignore it", () => {
+    expect(contentSecurityPolicy({ meta: true })).not.toContain("frame-ancestors");
+    expect(hashed).toContain("frame-ancestors 'none'");
+  });
+});
+
+describe("securityHeaders", () => {
+  it("lists the CSP first and every hardening header once", () => {
+    const headers = securityHeaders();
+    expect(headers[0]).toEqual({ key: "Content-Security-Policy", value: contentSecurityPolicy() });
+    const keys = headers.map((h) => h.key);
+    expect(new Set(keys).size).toBe(keys.length);
+    expect(keys).toEqual(
+      expect.arrayContaining([
+        "Strict-Transport-Security",
+        "X-Content-Type-Options",
+        "X-Frame-Options",
+        "Referrer-Policy",
+        "Permissions-Policy",
+      ]),
+    );
+    expect(securityHeaders({ dev: true })[0].value).toContain("'unsafe-eval'");
+  });
+});
+
+describe("inlineScriptHashes", () => {
+  const sha = (text: string) => `sha256-${createHash("sha256").update(text, "utf8").digest("base64")}`;
+
+  it("hashes executable inline scripts once each and skips src scripts and data blocks", () => {
+    const html =
+      '<script src="/a.js"></script><script>self.a=1</script><script type="module">b()</script>' +
+      '<script type="application/ld+json">{"x":1}</script><script type="text/javascript">c()</script>' +
+      "<script>self.a=1</script>";
+    expect(inlineScriptHashes(html)).toEqual([sha("self.a=1"), sha("b()"), sha("c()")]);
+  });
+
+  it("returns nothing for a page without inline scripts", () => {
+    expect(inlineScriptHashes("<p>hi</p>")).toEqual([]);
+  });
+});
+
+describe("withCspMeta", () => {
+  it("inserts the policy right after <meta charSet>, escaping quotes", () => {
+    const out = withCspMeta('<html><head><meta charSet="utf-8"/><script>x</script></head>', `a 'b' "c"`);
+    expect(out).toBe(
+      '<html><head><meta charSet="utf-8"/><meta http-equiv="Content-Security-Policy" content="a \'b\' &quot;c&quot;"/><script>x</script></head>',
+    );
+  });
+
+  it("falls back to right after <head>, and refuses a page without one", () => {
+    expect(withCspMeta('<head lang="ja"><title>t</title></head>', "p&q")).toBe(
+      '<head lang="ja"><meta http-equiv="Content-Security-Policy" content="p&amp;q"/><title>t</title></head>',
+    );
+    expect(() => withCspMeta("<p>no head</p>", "p")).toThrow(/no <head>/);
+  });
+});
+
+describe("headersFile", () => {
+  it("writes one indented block per path, separated by blank lines", () => {
+    expect(
+      headersFile([
+        { path: "/*", headers: [{ key: "A", value: "1" }] },
+        { path: "/x", headers: [{ key: "B", value: "2" }, { key: "C", value: "3" }] },
+      ]),
+    ).toBe("/*\n  A: 1\n\n/x\n  B: 2\n  C: 3\n");
   });
 });

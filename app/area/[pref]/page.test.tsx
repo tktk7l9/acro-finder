@@ -8,12 +8,20 @@ vi.mock("next/navigation", () => ({
   },
 }));
 
-import AreaPage, { generateMetadata } from "./page";
-import { facilitiesInPrefecture, prefectureSummary } from "@/lib/areas";
+import AreaPage, { dynamicParams, generateMetadata, generateStaticParams } from "./page";
+import { facilitiesByPrefecture, facilitiesInPrefecture, prefectureSummary } from "@/lib/areas";
 
 const params = (pref: string) => ({ params: Promise.resolve({ pref }) });
 
 describe("area page", () => {
+  it("prerenders exactly the prefectures that have a facility", () => {
+    const params = generateStaticParams();
+    expect(params.map((p) => p.pref)).toEqual(facilitiesByPrefecture().map((g) => g.slug));
+    expect(params).toContainEqual({ pref: "tokyo" });
+    // Unknown slugs must 404 instead of rendering on the Worker.
+    expect(dynamicParams).toBe(false);
+  });
+
   it("throws notFound for an unknown slug", async () => {
     await expect(AreaPage(params("atlantis"))).rejects.toBe(NOT_FOUND);
   });

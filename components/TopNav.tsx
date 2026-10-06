@@ -1,4 +1,3 @@
-import Link from "next/link";
 
 export type NavKey = "map" | "facilities" | "events" | "skills";
 
@@ -22,7 +21,7 @@ export function TopNav({
   return (
     <nav className="top-nav" aria-label="グローバルナビ">
       {NAV.map((n) => (
-        <Link
+        <a
           key={n.key}
           href={n.href}
           className={`top-nav-link ${active === n.key ? "active" : ""}`}
@@ -33,7 +32,7 @@ export function TopNav({
           </span>
           {n.label}
           {badges?.[n.key] !== undefined && <span className="top-nav-badge">{badges[n.key]}</span>}
-        </Link>
+        </a>
       ))}
     </nav>
   );

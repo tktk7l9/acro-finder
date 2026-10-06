@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { FACILITIES } from "@/lib/data";
 import { facilitiesByPrefecture } from "@/lib/areas";
 import { breadcrumbJsonLd, itemListJsonLd } from "@/lib/jsonld";
@@ -53,13 +52,11 @@ export default async function FacilitiesIndexPage() {
                 {g.prefecture.name}
                 <span className="count">（{g.facilities.length}）</span>
               </h2>
-              {/* One of these appears per prefecture, and each linked area page is about 57KB.
-                  The linked area/[pref] has no generateStaticParams, so it stays dynamic
-                  and is not CDN-cached; prefetching all 47 at once still costs more
-                  transfer than it is worth. Kept off even after dropping the nonce CSP. */}
-              <Link href={`/area/${g.slug}`} prefetch={false}>
+              {/* A plain <a>, not next/link: area pages are static assets that answer by
+                  path, so an RSC prefetch or client navigation would get HTML back. */}
+              <a href={`/area/${g.slug}`}>
                 このエリアを見る →
-              </Link>
+              </a>
             </div>
             <div className="area-grid">
               {g.facilities.map((f) => (
@@ -77,9 +74,9 @@ export default async function FacilitiesIndexPage() {
           <p className="doc-lede" style={{ margin: "0 0 14px" }}>
             あなたの施設を掲載しませんか？無料掲載・PR掲載・予約管理ツールをご案内しています。
           </p>
-          <Link href="/owners" className="btn btn-primary">
+          <a href="/owners" className="btn btn-primary">
             掲載・PRのご案内 →
-          </Link>
+          </a>
         </section>
       </main>
 

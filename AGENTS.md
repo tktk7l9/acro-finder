@@ -14,3 +14,24 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
   `audit-allowlist.json`. An entry needs a reason and an `expires` date (keep it about a month out), and
   `devOnly: true` stops matching once the package becomes reachable from production dependencies. The gate also
   fails when an allowlisted advisory gets a fix, so the entry is removed by updating rather than forgotten.
+
+## Static pages (Workers static assets)
+
+- `/`, `/facilities`, `/facilities/<id>`, `/area/<pref>`, `/events`, `/skills`, the icons, OG images, manifest,
+  `sitemap.xml`, `robots.txt` and `/favicon.ico` are prerendered by `next build` and copied into `public/` by
+  `scripts/export-static.mjs` (the `build` script; `prebuild`/`predev` run it with `--clean`). OpenNext ships them
+  as Workers static assets, which are served without running the Worker. Rendering them per request exceeded the
+  free plan's CPU limit (error 1102, "Worker exceeded resource limits") under a few Lighthouse runs. Do not make
+  these routes dynamic: `/facilities/[id]` and `/area/[pref]` use `generateStaticParams` + `dynamicParams = false`.
+- `/owners` stays on the Worker: its contact form posts a Server Action to `/owners`. Do not copy it into `public/`.
+- Security headers live in `lib/csp.ts`. next.config.ts applies them to Worker responses (CSP with
+  `'unsafe-inline'`); the script writes them to `public/_headers` (generated, gitignored) for static assets.
+- Exactly one `_headers` rule sets the CSP for any path; `/*` carries none (a `/*` CSP detached with
+  `! Content-Security-Policy` in a page rule left two enforced policies on the edge in my-apps-portal). Top pages
+  and area pages each get a rule whose script-src lists the sha256 of their inline scripts. The 116 facility pages
+  do not fit the limits (100 rules, 2,000 characters a line), so each carries its hashed policy in a
+  `<meta http-equiv>` tag and `/facilities/:id` keeps the `'unsafe-inline'` header; the browser enforces both.
+  Never edit a copied HTML file after hashing. A new non-HTML file in `public/` needs an entry in `STATIC_FILE_PATHS`.
+- Internal links are plain `<a>`, not `next/link` (`@next/next/no-html-link-for-pages` is off): static assets
+  answer by path and ignore the query, so an RSC prefetch or client navigation would get HTML back.
+- Data on the static pages is as fresh as the last build (deploy).

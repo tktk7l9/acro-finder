@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { SiteHeader } from "@/components/SiteHeader";
 
 export const metadata: Metadata = {
@@ -19,12 +18,12 @@ export default function NotFound() {
           URL が間違っているか、施設の掲載が終了した可能性があります。地図か一覧から探し直せます。
         </p>
         <div className="doc-cta">
-          <Link className="btn btn-primary" href="/">
+          <a className="btn btn-primary" href="/">
             施設マップで探す
-          </Link>
-          <Link className="btn" href="/facilities">
+          </a>
+          <a className="btn" href="/facilities">
             都道府県別の一覧を見る
-          </Link>
+          </a>
         </div>
       </main>
     </div>
