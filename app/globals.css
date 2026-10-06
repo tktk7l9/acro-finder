@@ -838,8 +838,13 @@ button {
   border-color: var(--accent);
   font-weight: 600;
 }
+/* The glyphs (■ ◉ ▤ …) are outside JetBrains Mono's latin subset, so they never
+   came from it: ■ │ ▬ from its size-matched Arial fallback, ◉ ▢ from Hiragino,
+   ▤ from Menlo. Naming those fonts draws them the same way without making the
+   first view of the map fetch JetBrains Mono, which a family in use costs even
+   when it supplies no glyph (app/layout.tsx does not preload it). */
 .eq-chip .icon {
-  font-family: var(--font-mono);
+  font-family: "JetBrains Mono Fallback", "Hiragino Kaku Gothic ProN", Menlo, ui-monospace, monospace;
   font-size: 10px;
 }
 
@@ -1169,6 +1174,14 @@ button {
 }
 .empty p { margin: 0 0 10px; line-height: 1.7; }
 .empty .btn { margin-top: 8px; }
+/* End of the prerendered list, until the rest of the cards render (app/page.tsx). */
+.list-more {
+  margin: 0;
+  padding: 16px 20px;
+  text-align: center;
+  font-size: 12px;
+}
+.list-more a { color: var(--ink-2); }
 
 /* === Links list (detail panel) === */
 .links-list {

@@ -1,21 +1,32 @@
 import type { Metadata, Viewport } from "next";
-import { Inter_Tight, JetBrains_Mono } from "next/font/google";
+import { JetBrains_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
 import { Analytics } from "@/components/Analytics";
 import { SnsIconSprite } from "@/components/SnsIcons";
 import "./globals.css";
 
-const fontEn = Inter_Tight({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+// Inter Tight, self-hosted: Google's latin characters (plus macron vowels) with
+// only the 400-700 weights, 28 KB instead of Google's 45 KB file and the 90 KB
+// latin-ext one a facility name pulled in. Built by scripts/build-fonts.py.
+// It is preloaded: the brand, tabs and list use it in the first view.
+const fontEn = localFont({
+  src: "./fonts/inter-tight.woff2",
+  weight: "400 700",
   variable: "--f-en",
   display: "swap",
 });
+// Not preloaded, and nothing a phone shows in the first view of the map uses
+// it (the map legend and the nav glyphs are hidden there; the equipment icons
+// name their own fonts in globals.css), so a phone fetches it only on pages that
+// set text in it. Preloaded, its 31 KB went out with the CSS, the map
+// placeholder and the JS on every page.
 const fontMono = JetBrains_Mono({
   subsets: ["latin"],
   weight: ["400", "500"],
   variable: "--f-mono",
   display: "swap",
+  preload: false,
 });
 // Japanese text uses the OS font (Hiragino / Noto Sans CJK / Yu Gothic, see
 // --font-jp in globals.css). A Japanese web font ships as ~20 unicode-range

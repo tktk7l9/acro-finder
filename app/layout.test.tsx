@@ -1,9 +1,11 @@
 import { describe, it, expect, vi } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 
-// next/font/google needs the Next build pipeline; stand in with plain class names.
+// next/font needs the Next build pipeline; stand in with plain class names.
+vi.mock("next/font/local", () => ({
+  default: () => ({ variable: "font-en" }),
+}));
 vi.mock("next/font/google", () => ({
-  Inter_Tight: () => ({ variable: "font-en" }),
   JetBrains_Mono: () => ({ variable: "font-mono" }),
 }));
 

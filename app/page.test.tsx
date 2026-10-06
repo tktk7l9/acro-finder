@@ -11,8 +11,10 @@ vi.mock("@/components/InteractiveMap", () => ({
   },
 }));
 
+import { renderToString } from "react-dom/server";
 import Page from "./page";
 import { facilitiesInPrefecture, prefectureOptions } from "@/lib/areas";
+import { FACILITIES } from "@/lib/data";
 
 describe("home page", () => {
   // The page reads/writes ?q= and ?f= on the URL; reset it between tests so
@@ -24,6 +26,36 @@ describe("home page", () => {
   it("renders a facility card for all 116 facilities", () => {
     const { container } = render(<Page />);
     expect(container.querySelectorAll(".card")).toHaveLength(116);
+    expect(container.querySelector(".list-more")).toBeNull();
+  });
+
+  // The server HTML stops after 20 cards to stay small; the rest render on
+  // mount. Without JavaScript the cut-off list says where the rest is (SHIG 59, 60).
+  it("prerenders the first 20 cards and points to the full list", () => {
+    // React separates adjacent text nodes with empty comments in server HTML.
+    const html = renderToString(<Page />).replaceAll("<!-- -->", "");
+    expect(html.match(/data-facility-id="/g)).toHaveLength(20);
+    expect(html).toContain(
+      `<p class="list-more"><a href="/facilities">ほか${FACILITIES.length - 20}件の施設は施設一覧で見られます</a></p>`,
+    );
+  });
+
+  it("brings a deep-linked facility past the prerendered cards into view", () => {
+    const farthest = [...FACILITIES].sort((a, b) => b.distance - a.distance)[0].id;
+    const scrolled: Element[] = [];
+    const orig = Element.prototype.scrollIntoView;
+    Element.prototype.scrollIntoView = function () {
+      scrolled.push(this);
+    };
+    try {
+      window.history.replaceState(null, "", `/?f=${farthest}`);
+      const { container } = render(<Page />);
+      const card = container.querySelector(`.card[data-facility-id="${farthest}"]`);
+      expect(card?.getAttribute("aria-current")).toBe("true");
+      expect(scrolled).toContain(card);
+    } finally {
+      Element.prototype.scrollIntoView = orig;
+    }
   });
 
   it("filters facilities by search query", () => {
