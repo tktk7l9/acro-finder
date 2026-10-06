@@ -1,4 +1,4 @@
-// Skill data: 80 skills across 6 genres.
+// Skill data: 160 skills across 6 genres.
 // Difficulty lv: 1 (basic) to 10 (elite). prereqs / leads are arrays of skill ids.
 
 export type SkillGenre = "tricking" | "parkour" | "gym" | "break" | "ski" | "snow";

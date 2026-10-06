@@ -61,7 +61,7 @@ describe("EventCard", () => {
   });
 
   it("shows the 募集中 status for an upcoming open event without a signup button", () => {
-    const e = { ...ev("e01"), date: "2026-09-01", status: undefined };
+    const e = { ...ev("e01"), date: "2026-09-01", endDate: undefined, status: undefined };
     const { container } = render(<EventCard event={e} />);
     expect(container.querySelector(".event-status")?.textContent).toBe("募集中");
     expect(container.querySelector(".event-card-cta")).toBeNull();
