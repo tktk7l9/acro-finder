@@ -30,7 +30,7 @@ function FacilityCardImpl({ facility, index, active, favorite = false, onClick }
       <div className="card-row">
         <div className="card-thumb">
           {index !== undefined && <span className="card-thumb-num">{index}</span>}
-          <Photo data={facility.photos[0]} src={facility.image} type={facility.type} />
+          <Photo data={facility.photos[0]} src={facility.image} type={facility.type} defer />
         </div>
         <div className="card-body">
           <h2 className="card-title">

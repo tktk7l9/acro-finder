@@ -1,6 +1,7 @@
-import { describe, it, expect } from "vitest";
-import { render, fireEvent } from "@testing-library/react";
+import { describe, it, expect, vi } from "vitest";
+import { act, render, fireEvent } from "@testing-library/react";
 import { Photo } from "./Photo";
+import { __resetAfterLoad } from "@/lib/after-load";
 
 describe("Photo", () => {
   it("renders the label and color class", () => {
@@ -77,5 +78,25 @@ describe("Photo", () => {
       <Photo data={{ label: "x", color: "ok-slate" }} type="trampoline" />,
     );
     expect(container.querySelector(".photo-glyph")?.textContent).toBe("◆");
+  });
+
+  // List thumbnails hotlink full-size originals; they wait until the page has
+  // loaded so they do not compete with the first view (lib/after-load.ts).
+  it("keeps a deferred photo on the placeholder until the page has loaded", () => {
+    __resetAfterLoad();
+    vi.useFakeTimers();
+    try {
+      const { container } = render(
+        <Photo data={{ label: "x", color: "ok-lime" }} src="https://example.test/x.jpg" type="mixed" defer />,
+      );
+      expect(container.querySelector("img")).toBeNull();
+      expect(container.querySelector(".photo-glyph")).toBeTruthy();
+      act(() => {
+        vi.runAllTimers();
+      });
+      expect(container.querySelector("img")?.getAttribute("src")).toBe("https://example.test/x.jpg");
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter_Tight, JetBrains_Mono, Zen_Kaku_Gothic_New } from "next/font/google";
+import { Inter_Tight, JetBrains_Mono } from "next/font/google";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
 import { SnsIconSprite } from "@/components/SnsIcons";
 import "./globals.css";
@@ -16,13 +16,10 @@ const fontMono = JetBrains_Mono({
   variable: "--f-mono",
   display: "swap",
 });
-const fontJp = Zen_Kaku_Gothic_New({
-  subsets: ["latin"],
-  weight: ["400", "500", "700"],
-  variable: "--f-jp",
-  display: "swap",
-  preload: false,
-});
+// Japanese text uses the OS font (Hiragino / Noto Sans CJK / Yu Gothic, see
+// --font-jp in globals.css). A Japanese web font ships as ~20 unicode-range
+// files per weight; Zen Kaku Gothic New in three weights was ~66 requests and
+// ~650 KB on the first view of the map, the largest cost on a phone.
 
 const TITLE = `${SITE_NAME} · アクロバット練習施設マップ`;
 const DESCRIPTION =
@@ -75,7 +72,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ja" className={`${fontEn.variable} ${fontMono.variable} ${fontJp.variable}`}>
+    <html lang="ja" className={`${fontEn.variable} ${fontMono.variable}`}>
       <body>
         <SnsIconSprite />
         {children}
