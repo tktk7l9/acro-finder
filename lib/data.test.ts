@@ -26,6 +26,18 @@ describe("FACILITIES", () => {
     }
   });
 
+  it("only links to http(s) URLs (they are rendered as hrefs and hotlinked images)", () => {
+    // Facility data is imported from scraped sources; a javascript: or data:
+    // value here would reach <a href> / <img src> unescaped by React.
+    for (const f of FACILITIES) {
+      if (f.links.web) expect(f.links.web).toMatch(/^https?:\/\//);
+      if (f.image) expect(f.image).toMatch(/^https?:\/\//);
+      for (const handle of [f.links.instagram, f.links.twitter, f.links.youtube, f.links.tiktok]) {
+        if (handle) expect(handle).not.toMatch(/[\s"'<>]|^\/\/|:/);
+      }
+    }
+  });
+
   it("keeps optional rich fields internally consistent when present", () => {
     for (const f of FACILITIES) {
       if (f.hours) expect(f.hours).toHaveLength(7);

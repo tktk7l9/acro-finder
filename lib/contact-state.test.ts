@@ -13,9 +13,13 @@ describe("validateContactField", () => {
     expect(validateContactField("email", "nope")).toBe(false);
     expect(validateContactField("email", "a@b")).toBe(false);
   });
-  it("subject: non-empty, up to 150 chars", () => {
+  it("subject: only one of the fixed options", () => {
     expect(validateContactField("subject", "掲載・修正の依頼")).toBe(true);
+    expect(validateContactField("subject", " その他 ")).toBe(true);
     expect(validateContactField("subject", "")).toBe(false);
+    // A hand-crafted POST must not be able to set an arbitrary mail subject.
+    expect(validateContactField("subject", "URGENT\r\nBcc: x@example.test")).toBe(false);
+    expect(validateContactField("subject", "掲載・修正の依頼です")).toBe(false);
   });
   it("message: between 10 and 5000 chars", () => {
     expect(validateContactField("message", "短い")).toBe(false);

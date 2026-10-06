@@ -1,0 +1,14 @@
+# Header rules for Cloudflare Workers static assets.
+# https://developers.cloudflare.com/workers/static-assets/headers/
+# https://opennext.js.org/cloudflare/caching#static-assets-caching
+#
+# Workers Assets serves /_next/static/* and the files in public/ before the
+# Worker runs, so the headers() in next.config.ts never reach them. nosniff is
+# restated for everything served this way; Next.js emits /_next/static/* with
+# content hashes, so those can be cached forever. (A header named in two
+# matching blocks is joined with a comma, so each header lives in one block.)
+/*
+  X-Content-Type-Options: nosniff
+
+/_next/static/*
+  Cache-Control: public, max-age=31536000, immutable
