@@ -38,3 +38,20 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Internal links are plain `<a>`, not `next/link` (`@next/next/no-html-link-for-pages` is off): static assets
   answer by path and ignore the query, so an RSC prefetch or client navigation would get HTML back.
 - Data on the static pages is as fresh as the last build (deploy).
+
+## First view of the map (mobile Lighthouse)
+
+Lighthouse simulates the load and counts every request that finished before the first paint, so the map page's
+LCP grows with each byte and request in its first view. Keep these in place:
+
+- The map page's HTML carries only the first 20 cards (`SERVER_CARDS` in `components/MapApp.tsx`); the rest
+  render on mount. All 116 made the HTML 171 KB (19 KB compressed, over the ~14 KB a new connection gets in its first
+  round trip).
+- `components/MapApp.tsx` is the client app. `app/page.tsx` hands it server-side values (the event count) so data
+  it only counts stays out of its JavaScript. Pass small values, not lists: props are written into the HTML.
+- Only Inter Tight is preloaded. It is self-hosted (`app/fonts/inter-tight.woff2`, made by
+  `scripts/build-fonts.py`): Google's latin characters plus macron vowels, weights 400-700. A character outside
+  it falls back to Arial; rerun the script with it added if a facility name needs one.
+- JetBrains Mono is not preloaded and is not used by anything a phone renders in the first view. A family that
+  leads a rendered element's `font-family` is downloaded for its line metrics even when it draws no glyph, which
+  is why the equipment chip icons name their fallback fonts instead of `var(--font-mono)`.
