@@ -28,10 +28,11 @@ describe("root layout", () => {
     expect(html.indexOf("<symbol")).toBeLessThan(html.indexOf("<main>"));
   });
 
-  it("loads the analytics beacon as a deferred module script", () => {
-    expect(html).toMatch(
-      /<script type="module" src="https:\/\/static\.cloudflareinsights\.com\/beacon\.min\.js" data-cf-beacon=/,
-    );
+  it("writes no script tag, so the HTML has no external script without SRI", () => {
+    // The analytics beacon is appended after hydration by components/Analytics.tsx.
+    // A <script src> to static.cloudflareinsights.com here costs the Observatory SRI test.
+    expect(html).not.toContain("<script");
+    expect(html).not.toContain("cloudflareinsights");
   });
 
   it("titles pages with the site suffix and describes the app", () => {

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter_Tight, JetBrains_Mono } from "next/font/google";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
+import { Analytics } from "@/components/Analytics";
 import { SnsIconSprite } from "@/components/SnsIcons";
 import "./globals.css";
 
@@ -76,18 +77,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <SnsIconSprite />
         {children}
-        {/* Cloudflare Web Analytics, replacing Vercel Analytics removed in the 2026-09-14
-            Workers migration. The token is embedded in the HTML and visible to every
-            visitor, so it is not a secret. The allowed origins live in lib/csp.ts, and
-            csp.test.ts pins both. gitleaks flags a 32-digit hex as generic-api-key, so
-            gitleaks:allow on the flagged line suppresses it (a config file would also hide real secrets). */}
-        {/* eslint-disable-next-line @next/next/no-sync-scripts --
-            type="module" scripts are deferred by spec, so this does not block the parser */}
-        <script
-          type="module"
-          src="https://static.cloudflareinsights.com/beacon.min.js"
-          data-cf-beacon={'{"token": "4bc6c9283c434c8eb00a63fda94b12f1"}' /* gitleaks:allow */}
-        />
+        {/* Cloudflare Web Analytics, appended after hydration (components/Analytics.tsx) so
+            the HTML carries no external <script src> without SRI. */}
+        <Analytics />
       </body>
     </html>
   );
