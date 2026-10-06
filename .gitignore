@@ -36,3 +36,20 @@ next-env.d.ts
 # wrangler local secrets
 .dev.vars
 .dev.vars.*
+
+# Generated into public/ by scripts/export-static.mjs (served as Workers static assets)
+/public/_headers
+/public/index.html
+/public/events.html
+/public/skills.html
+/public/facilities.html
+/public/facilities/
+/public/area/
+/public/icon.svg
+/public/apple-icon
+/public/favicon.ico
+/public/opengraph-image
+/public/twitter-image
+/public/manifest.webmanifest
+/public/sitemap.xml
+/public/robots.txt

@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { prefectureBySlug, facilitiesInPrefecture, prefectureSummary } from "@/lib/areas";
+import {
+  prefectureBySlug,
+  facilitiesByPrefecture,
+  facilitiesInPrefecture,
+  prefectureSummary,
+} from "@/lib/areas";
 import { breadcrumbJsonLd, itemListJsonLd } from "@/lib/jsonld";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -10,6 +15,16 @@ import { JsonLd } from "@/components/JsonLd";
 
 interface Props {
   params: Promise<{ pref: string }>;
+}
+
+// Every prefecture with a facility is prerendered and copied into public/ by
+// scripts/export-static.mjs, so the page is a static asset and never runs the
+// Worker (rendering per request hit the free plan's CPU limit, error 1102).
+// Any other slug is a 404.
+export const dynamicParams = false;
+
+export function generateStaticParams(): { pref: string }[] {
+  return facilitiesByPrefecture().map((g) => ({ pref: g.slug }));
 }
 
 const TYPE_LABELS: Record<string, string> = {

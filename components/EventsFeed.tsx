@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState, type CSSProperties } from "react";
-import Link from "next/link";
 import { TopNav } from "./TopNav";
 import { EVENT_TYPES, EVENTS, eventStatus } from "@/lib/events-data";
 import { fmtEventDate, normalizeForSearch, todayJst } from "@/lib/util";
@@ -92,13 +91,13 @@ export function EventsFeed() {
   return (
     <div className="events-app">
       <header className="topbar">
-        <Link href="/" className="brand" aria-label="ACRO/FINDER ホーム">
+        <a href="/" className="brand" aria-label="ACRO/FINDER ホーム">
           <div className="brand-mark">A</div>
           <div>
             ACRO<span style={{ color: "var(--ink-3)" }}>/</span>FINDER
             <div className="jp">アクロバット練習施設</div>
           </div>
-        </Link>
+        </a>
         <TopNav active="events" badges={{ events: EVENTS.length }} />
         <div className="search">
           <span className="search-icon">⌕</span>

@@ -1,4 +1,3 @@
-import Link from "next/link";
 
 export interface Crumb {
   name: string;
@@ -17,7 +16,7 @@ export function Breadcrumb({ items }: { items: Crumb[] }) {
             {last ? (
               <span aria-current="page">{it.name}</span>
             ) : (
-              <Link href={it.href}>{it.name}</Link>
+              <a href={it.href}>{it.name}</a>
             )}
           </span>
         );

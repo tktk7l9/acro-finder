@@ -57,7 +57,7 @@ vi.mock("@/lib/data", async (importOriginal) => {
   return { ...mod, FACILITIES: [...mod.FACILITIES, bare, full] };
 });
 
-import FacilityPage, { generateMetadata } from "./page";
+import FacilityPage, { dynamicParams, generateMetadata, generateStaticParams } from "./page";
 import { FACILITIES } from "@/lib/data";
 
 const params = (id: string) => ({ params: Promise.resolve({ id }) });
@@ -65,6 +65,11 @@ const renderPage = async (id: string) => render(await FacilityPage(params(id)));
 const mission = FACILITIES.find((f) => f.id === "f01")!;
 
 describe("facility page", () => {
+  it("prerenders every facility and 404s any other id", () => {
+    expect(generateStaticParams()).toEqual(FACILITIES.map((f) => ({ id: f.id })));
+    expect(dynamicParams).toBe(false);
+  });
+
   it("throws notFound for an unknown id", async () => {
     await expect(FacilityPage(params("nope"))).rejects.toBe(NOT_FOUND);
   });

@@ -1,4 +1,3 @@
-import Link from "next/link";
 import type { Facility } from "@/lib/types";
 
 // Compact, crawlable link card used on the index and area pages.
@@ -11,7 +10,7 @@ import type { Facility } from "@/lib/types";
 // Users actually open only a few of the 99, so the transfer cost outweighs the prefetch value.
 export function FacilityLink({ facility }: { facility: Facility }) {
   return (
-    <Link href={`/facilities/${facility.id}`} className="fac-link" prefetch={false}>
+    <a href={`/facilities/${facility.id}`} className="fac-link">
       <span className="name">{facility.name}</span>
       <span className="meta">
         <span>{facility.area}</span>
@@ -25,6 +24,6 @@ export function FacilityLink({ facility }: { facility: Facility }) {
           ))}
         </span>
       )}
-    </Link>
+    </a>
   );
 }

@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { FACILITIES } from "@/lib/data";
 import { prefectureOf, slugForPrefecture, sameAreaFacilities } from "@/lib/areas";
@@ -14,6 +13,15 @@ import { hasValue, telHref } from "@/lib/util";
 
 interface Props {
   params: Promise<{ id: string }>;
+}
+
+// Every facility is prerendered and copied into public/ by scripts/export-static.mjs,
+// so the page is a static asset and never runs the Worker (rendering per request hit
+// the free plan's CPU limit, error 1102). Any other id is a 404.
+export const dynamicParams = false;
+
+export function generateStaticParams(): { id: string }[] {
+  return FACILITIES.map((f) => ({ id: f.id }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -73,9 +81,9 @@ export default async function FacilityPage({ params }: Props) {
       <a className="btn" href={directionsUrl} target="_blank" rel="noreferrer">
         経路を見る
       </a>
-      <Link className="btn" href={`/?f=${facility.id}`}>
+      <a className="btn" href={`/?f=${facility.id}`}>
         地図で見る
-      </Link>
+      </a>
     </div>
   );
 
@@ -128,9 +136,9 @@ export default async function FacilityPage({ params }: Props) {
               <div className="v">{facility.address}</div>
               {pref && slug && (
                 <div className="sub" style={{ marginTop: 6 }}>
-                  <Link href={`/area/${slug}`} prefetch={false}>
+                  <a href={`/area/${slug}`}>
                     {pref.name}の施設をすべて見る →
-                  </Link>
+                  </a>
                 </div>
               )}
             </div>
@@ -283,9 +291,9 @@ export default async function FacilityPage({ params }: Props) {
           <section className="detail-section">
             <h2 className="detail-section-title">
               {pref.name}の他の施設
-              <Link href={`/area/${slug}`} className="section-more" prefetch={false}>
+              <a href={`/area/${slug}`} className="section-more">
                 すべて見る →
-              </Link>
+              </a>
             </h2>
             <div className="area-grid">
               {nearby.map((f) => (

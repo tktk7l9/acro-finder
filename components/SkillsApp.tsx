@@ -9,7 +9,6 @@ import {
   useRef,
   useState,
 } from "react";
-import Link from "next/link";
 import { TopNav } from "./TopNav";
 import { SKILLS, SKILL_GENRES, type Skill, type SkillGenre } from "@/lib/skills-data";
 import { SkillArt } from "./SkillArt";
@@ -229,13 +228,13 @@ export function SkillsApp() {
   return (
     <div className="skills-app">
       <header className="topbar">
-        <Link href="/" className="brand" aria-label="ACRO/FINDER ホーム">
+        <a href="/" className="brand" aria-label="ACRO/FINDER ホーム">
           <div className="brand-mark">A</div>
           <div>
             ACRO<span style={{ color: "var(--ink-3)" }}>/</span>FINDER
             <div className="jp">アクロバット練習施設</div>
           </div>
-        </Link>
+        </a>
         <TopNav active="skills" badges={{ skills: SKILLS.length }} />
         <div className="search">
           <span className="search-icon">⌕</span>
