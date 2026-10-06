@@ -6,7 +6,9 @@ import { FACILITIES } from "@/lib/data";
 const fac = (id: string) => FACILITIES.find((f) => f.id === id)!;
 const mission = fac("f01"); // lessons + booking + 3 SNS links
 const ptv = fac("f02"); //     5 SNS links
-const hero = fac("f04"); //    core-only (no lessons/booking), 1 SNS link
+// Core fields only: a real entry with its operational data taken off, so the
+// fixture stays core-only when the dataset gains lessons/booking for it.
+const hero = { ...fac("f04"), lessons: undefined, booking: undefined, payment: undefined };
 
 describe("FacilityCard", () => {
   it("renders name and area", () => {
