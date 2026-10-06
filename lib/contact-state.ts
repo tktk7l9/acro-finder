@@ -22,7 +22,9 @@ export function validateContactField(field: ContactFieldError, rawValue: string)
     case "email":
       return value.length > 0 && value.length <= 254 && EMAIL_RE.test(value);
     case "subject":
-      return value.length > 0 && value.length <= 150;
+      // The form offers a fixed <select>, so anything else is a hand-crafted
+      // POST. Rejecting it keeps the outgoing mail subject under our control.
+      return (CONTACT_SUBJECTS as readonly string[]).includes(value);
     case "message":
       return value.length >= 10 && value.length <= 5000;
   }
