@@ -5,7 +5,6 @@ import { renderToStaticMarkup } from "react-dom/server";
 vi.mock("next/font/google", () => ({
   Inter_Tight: () => ({ variable: "font-en" }),
   JetBrains_Mono: () => ({ variable: "font-mono" }),
-  Zen_Kaku_Gothic_New: () => ({ variable: "font-jp" }),
 }));
 
 import RootLayout, { metadata, viewport } from "./layout";
@@ -20,7 +19,7 @@ describe("root layout", () => {
   );
 
   it("declares a Japanese document carrying the font variables", () => {
-    expect(html).toMatch(/<html lang="ja" class="font-en font-mono font-jp">/);
+    expect(html).toMatch(/<html lang="ja" class="font-en font-mono">/);
     expect(html).toContain("<main>child</main>");
   });
 
