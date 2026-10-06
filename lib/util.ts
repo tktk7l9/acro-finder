@@ -80,6 +80,16 @@ export function fmtEventDate(iso: string) {
   };
 }
 
+// Tokyo Station: the base point for each facility's stored `distance` and the
+// map's position before the browser shares a real location.
+export const TOKYO_STATION: LatLng = { lat: 35.681, lng: 139.767 };
+
+// Stored distances keep the precision formatDistance shows: 0.1 km under
+// 100 km, whole kilometers beyond.
+export function roundDistanceKm(km: number): number {
+  return km < 100 ? Math.round(km * 10) / 10 : Math.round(km);
+}
+
 // Great-circle distance in kilometers (haversine).
 export function haversineKm(a: LatLng, b: LatLng): number {
   const R = 6371;

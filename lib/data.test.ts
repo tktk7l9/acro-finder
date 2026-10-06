@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { FACILITIES, EQUIPMENT_FILTERS, TYPE_FILTERS } from "./data";
 import { prefectureOf } from "./areas";
+import { TOKYO_STATION, haversineKm, roundDistanceKm } from "./util";
 
 // Prefecture bounding boxes [minLat, maxLat, minLng, maxLng] in degrees.
 // Source: GSI (国土地理院) 「都道府県の東西南北端点の経度緯度」, rounded
@@ -127,6 +128,15 @@ describe("FACILITIES", () => {
       if (group.length === 1) continue;
       const streets = new Set(group.map((f) => street(f.address)));
       expect(streets.size, `${group.map((f) => f.id).join(", ")} share ${key} with different addresses`).toBe(1);
+    }
+  });
+
+  it("stores distance as the rounded great-circle km from Tokyo Station", () => {
+    // `distance` is shown as 「東京駅から」 before the browser shares a location
+    // and orders the area pages, so it must follow the coordinates.
+    for (const f of FACILITIES) {
+      const km = roundDistanceKm(haversineKm(TOKYO_STATION, { lat: f.lat, lng: f.lng }));
+      expect(f.distance, `${f.id} distance is stale`).toBe(km);
     }
   });
 

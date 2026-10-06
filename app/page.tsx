@@ -17,7 +17,7 @@ import { EVENTS } from "@/lib/events-data";
 import type { SortKey } from "@/lib/types";
 import type { Prefecture } from "@/lib/prefectures";
 import { prefectureOf, prefectureOptions } from "@/lib/areas";
-import { haversineKm, normalizeForSearch, priceValue } from "@/lib/util";
+import { TOKYO_STATION, haversineKm, normalizeForSearch, priceValue } from "@/lib/util";
 import { loadFavorites, saveFavorites, toggleFavorite } from "@/lib/favorites";
 import { usePanelHistory } from "@/lib/panel-history";
 
@@ -38,7 +38,7 @@ const InteractiveMap = dynamic(
 
 // Fallback position shown before the browser geolocation is granted —
 // central Tokyo (around Tokyo Station).
-const DEFAULT_POS = { lat: 35.681, lng: 139.767 };
+const DEFAULT_POS = TOKYO_STATION;
 
 type GeoState = "idle" | "locating" | "active" | "error";
 
