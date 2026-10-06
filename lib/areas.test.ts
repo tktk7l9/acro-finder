@@ -59,7 +59,7 @@ describe("facilitiesInPrefecture", () => {
     }
   });
   it("returns an empty list for a prefecture with no facilities", () => {
-    expect(facilitiesInPrefecture("沖縄県")).toEqual([]);
+    expect(facilitiesInPrefecture("青森県")).toEqual([]);
   });
 });
 
@@ -93,7 +93,7 @@ describe("prefectureSummary", () => {
     expect(s.cities.some((c) => c.includes("区"))).toBe(true);
   });
   it("is empty for a prefecture with no facilities", () => {
-    expect(prefectureSummary("沖縄県")).toEqual({
+    expect(prefectureSummary("青森県")).toEqual({
       total: 0,
       byType: { parkour: 0, tricking: 0, mixed: 0 },
       cities: [],

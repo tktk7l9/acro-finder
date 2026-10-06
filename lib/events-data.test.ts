@@ -44,7 +44,8 @@ describe("event constants", () => {
 });
 
 describe("eventStatus", () => {
-  const base = EVENTS[0];
+  // Strip the real end date so each case controls the dates it tests.
+  const base = { ...EVENTS[0], endDate: undefined };
   it("is past once the (end) date is before today", () => {
     expect(eventStatus({ ...base, date: "2025-01-01", endDate: undefined }, "2026-06-25")).toBe(
       "past",

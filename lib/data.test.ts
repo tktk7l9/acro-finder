@@ -2,9 +2,9 @@ import { describe, it, expect } from "vitest";
 import { FACILITIES, EQUIPMENT_FILTERS, TYPE_FILTERS } from "./data";
 
 describe("FACILITIES", () => {
-  it("has 99 real facilities with unique ids", () => {
-    expect(FACILITIES).toHaveLength(99);
-    expect(new Set(FACILITIES.map((f) => f.id)).size).toBe(99);
+  it("has 117 real facilities with unique ids", () => {
+    expect(FACILITIES).toHaveLength(117);
+    expect(new Set(FACILITIES.map((f) => f.id)).size).toBe(117);
   });
 
   it("has well-formed core fields on every facility", () => {

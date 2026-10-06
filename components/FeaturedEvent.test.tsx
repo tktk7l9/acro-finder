@@ -51,7 +51,17 @@ describe("FeaturedEvent", () => {
 
   it("omits every optional cell for a minimal event", () => {
     const { container } = render(
-      <FeaturedEvent event={{ ...event, venue: undefined, tags: undefined }} />,
+      <FeaturedEvent
+        event={{
+          ...event,
+          venue: undefined,
+          tags: undefined,
+          time: undefined,
+          fee: undefined,
+          feeNote: undefined,
+          capacity: undefined,
+        }}
+      />,
     );
     expect(container.querySelectorAll(".featured-info-cell")).toHaveLength(0);
     expect(container.querySelector(".tag")).toBeNull();
