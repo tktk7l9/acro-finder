@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { FACILITIES, EQUIPMENT_FILTERS, TYPE_FILTERS } from "./data";
 import { prefectureOf } from "./areas";
-import { TOKYO_STATION, haversineKm, roundDistanceKm } from "./util";
+import { TOKYO_STATION, haversineKm, priceValue, roundDistanceKm } from "./util";
 
 // Prefecture bounding boxes [minLat, maxLat, minLng, maxLng] in degrees.
 // Source: GSI (国土地理院) 「都道府県の東西南北端点の経度緯度」, rounded
@@ -60,9 +60,9 @@ const PREFECTURE_BOUNDS: Record<string, [number, number, number, number]> = {
 };
 
 describe("FACILITIES", () => {
-  it("has 116 real facilities with unique ids", () => {
-    expect(FACILITIES).toHaveLength(116);
-    expect(new Set(FACILITIES.map((f) => f.id)).size).toBe(116);
+  it("has 111 real facilities with unique ids", () => {
+    expect(FACILITIES).toHaveLength(111);
+    expect(new Set(FACILITIES.map((f) => f.id)).size).toBe(111);
   });
 
   it("has well-formed core fields on every facility", () => {
@@ -105,6 +105,15 @@ describe("FACILITIES", () => {
       }
       if (f.lessons) expect(typeof f.lessons.available).toBe("boolean");
       if (f.equipment) expect(f.equipment.length).toBeGreaterThan(0);
+    }
+  });
+
+  it("starts each price with the yen amount the price sort reads", () => {
+    // priceValue takes the first number in the string, so "1回 ¥3,000" would
+    // sort as ¥1. Write the amount first: "¥3,000/回".
+    for (const f of FACILITIES) {
+      const yen = f.price?.match(/¥([\d,]+)/)?.[1];
+      if (yen) expect(priceValue(f.price), `${f.id}: ${f.price}`).toBe(Number(yen.replace(/,/g, "")));
     }
   });
 
