@@ -6,6 +6,7 @@ import {
   todayLabel,
   fmtEventDate,
   haversineKm,
+  roundDistanceKm,
   priceValue,
   normalizeForSearch,
   todayJst,
@@ -112,6 +113,17 @@ describe("haversineKm", () => {
     const d = haversineKm({ lat: 35.68, lng: 139.77 }, { lat: 34.69, lng: 135.5 });
     expect(d).toBeGreaterThan(380);
     expect(d).toBeLessThan(420);
+  });
+});
+
+describe("roundDistanceKm", () => {
+  it("keeps one decimal under 100 km", () => {
+    expect(roundDistanceKm(12.345)).toBe(12.3);
+    expect(roundDistanceKm(99.94)).toBe(99.9);
+  });
+  it("rounds to whole kilometers from 100 km", () => {
+    expect(roundDistanceKm(100)).toBe(100);
+    expect(roundDistanceKm(407.6)).toBe(408);
   });
 });
 
