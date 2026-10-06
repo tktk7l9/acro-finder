@@ -19,9 +19,10 @@
 // Worker the map library spawns.
 //
 // Two places are widened for the Cloudflare Web Analytics beacon. The script itself is
-// loaded from static.cloudflareinsights.com, and the data is POSTed to
+// loaded from static.cloudflareinsights.com (appended after hydration by
+// components/Analytics.tsx, not written into the HTML), and the data is POSTed to
 // cloudflareinsights.com. **If either is missing, the page still looks fine
-// while only the beacon is silently blocked**, so csp.test.ts pins both.
+// while only the beacon is silently blocked**, so csp.test.ts and analytics.test.ts pin both.
 import { createHash } from "node:crypto";
 
 export interface CspOptions {

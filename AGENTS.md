@@ -32,6 +32,9 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
   do not fit the limits (100 rules, 2,000 characters a line), so each carries its hashed policy in a
   `<meta http-equiv>` tag and `/facilities/:id` keeps the `'unsafe-inline'` header; the browser enforces both.
   Never edit a copied HTML file after hashing. A new non-HTML file in `public/` needs an entry in `STATIC_FILE_PATHS`.
+- The Cloudflare Web Analytics beacon is appended after hydration by `components/Analytics.tsx`, not written as a
+  `<script src>` in the layout: Cloudflare swaps `beacon.min.js` under the same URL, so it cannot carry SRI, and
+  Observatory deducts for an external script without it. script-src and connect-src still allow its two origins.
 - Internal links are plain `<a>`, not `next/link` (`@next/next/no-html-link-for-pages` is off): static assets
   answer by path and ignore the query, so an RSC prefetch or client navigation would get HTML back.
 - Data on the static pages is as fresh as the last build (deploy).
