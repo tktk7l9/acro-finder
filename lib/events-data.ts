@@ -300,6 +300,7 @@ export const EVENTS: AcroEvent[] = [
     venue: "パルクールパーク MAX ATTACK 岡崎（愛知県岡崎市）",
     description:
       "スピード・スキル・フリースタイルの3種目を3対3で争う Japan Parkour League の第2戦。屋内施設で照明演出つきの開催。",
+    time: "開場 15:00 / 開始 16:00（5チームの総当たり戦のあと MVP 発表・選手トーク）",
     tags: ["パルクール", "リーグ戦", "愛知"],
   },
   {
@@ -350,6 +351,57 @@ export const EVENTS: AcroEvent[] = [
     venue: "四日市市民公園（三重県四日市市）",
     description: "Japan Parkour League のトーナメント戦。リーグ所属チーム以外も参加できる一般参加枠がある。",
     tags: ["パルクール", "リーグ戦", "三重"],
+  },
+  // Added 2026-10-07 from the organisers' own pages (yusf.jp, pk-oni.or.jp, jpn-gym.or.jp).
+  {
+    id: "e23",
+    title: "YUSF パルオニ TEAM BATTLE 2026",
+    titleJa: "YUSF パルクール鬼ごっこ チームバトル 2026",
+    type: "comp",
+    typeLabel: "大会",
+    date: "2026-10-17",
+    featured: false,
+    cover: "ok-slate",
+    venue: "横浜赤レンガ倉庫イベント広場・赤レンガパーク（横浜市中区新港1-1）",
+    description:
+      "YOKOHAMA URBAN SPORTS FESTIVAL '26 で開かれる、パルクール鬼ごっこ（パルオニ）の小学生チーム戦。U-9（小1〜3）と U-12（小1〜6）の2カテゴリーで、1チーム3名まで。会場では事前予約不要の体験会もある。",
+    fee: "入場無料",
+    feeNote: "エントリーは先着順（U-9・U-12 各9チーム）。当日、受付で保護者の同意書が必要",
+    tags: ["パルクール", "鬼ごっこ", "キッズ", "横浜"],
+  },
+  {
+    id: "e24",
+    title: "パルクール鬼ごっこ ボートレース芦屋カップ 2026",
+    titleJa: "パルクール鬼ごっこ ボートレース芦屋カップ 2026",
+    type: "comp",
+    typeLabel: "大会",
+    date: "2026-10-24",
+    endDate: "2026-10-25",
+    featured: false,
+    cover: "ok-lime",
+    venue: "BOAT RACE 芦屋 西プラザ（福岡県遠賀郡芦屋町芦屋3540）",
+    description:
+      "一般社団法人パルクール鬼ごっこ協会が開く小学生の大会。U-8・U-10・U-12 の個人戦とチーム戦があり、優勝者は全国大会「SGパルオニチャンピオンシップ」の出場権を得る。事前予約不要の体験会も両日開く。",
+    time: "両日 10:00〜16:00",
+    fee: "参加無料",
+    feeNote: "レース開催日は20歳以上にボートレース場の入場料 ¥100。大会は事前申込制（個人戦は各カテゴリー最大32名）",
+    tags: ["パルクール", "鬼ごっこ", "キッズ", "福岡"],
+  },
+  {
+    id: "e25",
+    title: "第63回全日本トランポリン & タンブリング競技選手権大会",
+    titleJa: "第63回全日本トランポリン & タンブリング競技選手権大会",
+    type: "comp",
+    typeLabel: "大会",
+    date: "2026-11-19",
+    endDate: "2026-11-22",
+    featured: false,
+    cover: "ok-amber",
+    venue: "タクミアリーナ（大館市樹海体育館・秋田県大館市）",
+    description:
+      "日本体操協会が主催する全日本選手権。今大会からトランポリン・タンブリング・ダブルミニトランポリンの3種別を同時に行い、タンブリングは11月21日に予選、22日に決勝。",
+    fee: "観戦無料",
+    tags: ["タンブリング", "全日本", "公式大会", "秋田"],
   },
 ];
 

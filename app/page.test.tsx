@@ -23,9 +23,9 @@ describe("home page", () => {
     window.history.replaceState(null, "", "/");
   });
 
-  it("renders a facility card for all 111 facilities", () => {
+  it("renders a facility card for all 131 facilities", () => {
     const { container } = render(<Page />);
-    expect(container.querySelectorAll(".card")).toHaveLength(111);
+    expect(container.querySelectorAll(".card")).toHaveLength(131);
     expect(container.querySelector(".list-more")).toBeNull();
   });
 
@@ -196,7 +196,7 @@ describe("home page", () => {
       expect(container.querySelectorAll(".card")).toHaveLength(0);
       fireEvent.click(button(container, "条件をすべて解除")!);
       expect(input.value).toBe("");
-      expect(container.querySelectorAll(".card")).toHaveLength(111);
+      expect(container.querySelectorAll(".card")).toHaveLength(131);
     });
 
     // SHIG 60: Esc is an escape hatch from the (full-screen on phones) panel.
@@ -341,7 +341,7 @@ describe("home page", () => {
       fireEvent.change(input, { target: { value: "zzz-no-such-facility" } });
       fireEvent.click(button(container, "条件をすべて解除")!);
       expect(select.value).toBe("");
-      expect(container.querySelectorAll(".card")).toHaveLength(111);
+      expect(container.querySelectorAll(".card")).toHaveLength(131);
     });
 
     // SHIG 60/82: the panel covers the phone screen, so the back button must
