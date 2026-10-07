@@ -42,7 +42,7 @@ describe("facilities index page", () => {
 });
 
 describe("facilities index (SHIG 59, 22)", () => {
-  // 43 prefectures / 131 cards make a very long page: a jump list at the top
+  // 45 prefectures / 141 cards make a very long page: a jump list at the top
   // takes the reader straight to their prefecture, and each section links back.
   it("offers a jump link to every prefecture section", async () => {
     const { container } = render(await FacilitiesIndexPage());
