@@ -317,6 +317,7 @@ export const EVENTS: AcroEvent[] = [
     facilityId: "f95",
     description:
       "日本トリッキング協会が主催する3日間のトリッキング大会。U-12バトルとオープンバトルに加え、ギャザリング・ワークショップ・ナイトパーティーも開催。",
+    time: "U-12 バトル 10/31 11:50〜13:30 ・ オープンバトル 10/31 13:30〜18:00（予選）・11/1 11:30〜15:00（ベスト16）",
     fee: "バトル ¥3,000 / ワークショップ ¥3,000 / ギャザリング ¥1,000（1日） / 観覧 ¥1,000（1日）",
     feeNote: "会場では現金のみ",
     deadline: "2026-10-24",
@@ -331,7 +332,7 @@ export const EVENTS: AcroEvent[] = [
     date: "2026-11-08",
     featured: false,
     cover: "ok-lime",
-    venue: "ヴェルニー公園 いこいの広場（神奈川県横須賀市）",
+    venue: "ヴェルニー公園 いこいの広場（神奈川県横須賀市汐入町1-1）",
     description:
       "東京都体操協会パルクール委員会が主催する屋外大会。フリースタイルとスピードランを男女別に実施し、ライブパフォーマンスも併催。",
     time: "11:00〜17:00",
@@ -349,7 +350,8 @@ export const EVENTS: AcroEvent[] = [
     featured: false,
     cover: "ok-amber",
     venue: "四日市市民公園（三重県四日市市）",
-    description: "Japan Parkour League のトーナメント戦。リーグ所属チーム以外も参加できる一般参加枠がある。",
+    description:
+      "Japan Parkour League のトーナメント戦。リーグ所属チーム以外も参加できる一般参加型で、公式は JPL FINAL の「最後のひと枠」として作った大会と告知している。",
     tags: ["パルクール", "リーグ戦", "三重"],
   },
   // Added 2026-10-07 from the organisers' own pages (yusf.jp, pk-oni.or.jp, jpn-gym.or.jp).

@@ -39,8 +39,8 @@ vi.mock("@/lib/data", async (importOriginal) => {
     id: "t-full",
     name: "FULL GYM",
     nameJa: "フルジム",
-    address: "長崎県長崎市1-1",
-    area: "長崎 / 長崎市",
+    address: "岩手県盛岡市1-1",
+    area: "岩手 / 盛岡市",
     links: {
       web: "https://full.example.test",
       instagram: "@full_ig",
@@ -186,9 +186,9 @@ describe("facility page", () => {
     expect(screen.getByText("可能")).toBeInTheDocument();
     expect(screen.getByText("前日まで")).toBeInTheDocument();
     expect(screen.getByText("1日 ¥3,500")).toBeInTheDocument();
-    // Only facility in Nagasaki → no neighbours section, but still an area link.
-    expect(screen.queryByText("長崎県の他の施設")).toBeNull();
-    expect(screen.getByRole("link", { name: "長崎県の施設をすべて見る →" })).toBeInTheDocument();
+    // Only facility in Iwate → no neighbours section, but still an area link.
+    expect(screen.queryByText("岩手県の他の施設")).toBeNull();
+    expect(screen.getByRole("link", { name: "岩手県の施設をすべて見る →" })).toBeInTheDocument();
   });
 });
 
