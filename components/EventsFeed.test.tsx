@@ -33,7 +33,7 @@ describe("EventsFeed", () => {
   it("filters by event type", () => {
     const { container } = render(<EventsFeed />);
     fireEvent.click(rowByLabel(container, "大会"));
-    expect(container.querySelector(".feed-stat .v .accent")?.textContent).toBe("17");
+    expect(container.querySelector(".feed-stat .v .accent")?.textContent).toBe("20");
   });
 
   it("shows an empty state when the search matches nothing", () => {
