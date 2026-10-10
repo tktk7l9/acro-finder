@@ -27,7 +27,7 @@ describe("area page", () => {
   });
 
   it("throws notFound for a prefecture with no facility", async () => {
-    const empty = ["akita", "tottori", "shimane", "kochi", "saga"].find(
+    const empty = ["iwate", "akita", "tottori", "shimane", "kochi", "saga"].find(
       (slug) => facilitiesInPrefecture(slugName(slug)).length === 0,
     );
     expect(empty).toBeDefined();
@@ -85,7 +85,7 @@ describe("area metadata", () => {
 
 function slugName(slug: string): string {
   return (
-    { akita: "秋田県", tottori: "鳥取県", shimane: "島根県", kochi: "高知県", saga: "佐賀県" }[
+    { iwate: "岩手県", akita: "秋田県", tottori: "鳥取県", shimane: "島根県", kochi: "高知県", saga: "佐賀県" }[
       slug
     ] ?? ""
   );
