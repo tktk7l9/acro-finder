@@ -213,11 +213,9 @@ describe("ContactForm", () => {
       fireEvent.change(name, { target: { value: "テスト太郎" } });
       fireEvent.change(message, { target: { value: "これはテストのメッセージです。" } });
       fireEvent.change(subject, { target: { value: "PR掲載（特集枠）について" } });
-      await act(async () => {
-        fireEvent.submit(container.querySelector("form")!);
-        await new Promise((r) => setTimeout(r, 20));
-      });
-      expect(container.querySelector('[role="alert"]')).toBeTruthy();
+      fireEvent.submit(container.querySelector("form")!);
+      // Wait for the server's answer to render instead of sleeping.
+      expect(await screen.findByRole("alert")).toBeInTheDocument();
       expect(submitContactForm).toHaveBeenCalledTimes(1);
       expect(submitContactForm.mock.calls[0][1].get("name")).toBe("テスト太郎");
       expect(name.value).toBe("テスト太郎");

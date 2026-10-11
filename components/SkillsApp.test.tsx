@@ -4,6 +4,13 @@ import { render, fireEvent, screen, within, act } from "@testing-library/react";
 import { SkillsApp } from "./SkillsApp";
 import { SKILLS } from "@/lib/skills-data";
 
+// jsdom delivers popstate from history.back()/forward() two setImmediate hops
+// later, so a fixed sleep can lose the race on a loaded machine (it did in
+// Workers Builds). Resolve when the event has actually been dispatched; the
+// app's own listener was registered at mount, so it has already run by then.
+const nextPopstate = () =>
+  new Promise<void>((resolve) => window.addEventListener("popstate", () => resolve(), { once: true }));
+
 const genreTab = (container: HTMLElement, label: string) =>
   [...container.querySelectorAll(".skl-genre-tab")].find((b) =>
     b.textContent?.includes(label),
@@ -163,16 +170,18 @@ describe("SkillsApp", () => {
       const { container } = render(<SkillsApp />);
       fireEvent.click(container.querySelector(".skl-card") as HTMLElement);
       const input = container.querySelector(".skills-app .search input") as HTMLInputElement;
-      // A wrong close would go through history.back, which jsdom fires later.
-      await act(async () => {
-        fireEvent.keyDown(input, { key: "Escape" });
-        await new Promise((r) => setTimeout(r, 10));
-      });
+      // The panel was opened by a click, so a (wrong) close would go through
+      // history.back(); checking that it was never called needs no waiting.
+      const back = vi.spyOn(window.history, "back");
+      fireEvent.keyDown(input, { key: "Escape" });
+      expect(back).not.toHaveBeenCalled();
       expect(container.querySelector(".skl-panel.open")).toBeTruthy();
-      // Esc elsewhere closes it (via history.back, which jsdom fires later).
+      back.mockRestore();
+      // Esc elsewhere closes it, via history.back().
       await act(async () => {
+        const popped = nextPopstate();
         fireEvent.keyDown(window, { key: "Escape" });
-        await new Promise((r) => setTimeout(r, 10));
+        await popped;
       });
       expect(container.querySelector(".skl-panel.open")).toBeNull();
     });
@@ -208,8 +217,9 @@ describe("SkillsApp", () => {
       fireEvent.click(container.querySelector(".skl-card") as HTMLElement);
       expect(container.querySelector(".skl-panel.open")).toBeTruthy();
       await act(async () => {
+        const popped = nextPopstate();
         window.history.back();
-        await new Promise((r) => setTimeout(r, 10));
+        await popped;
       });
       expect(container.querySelector(".skl-panel.open")).toBeNull();
       expect(window.location.search).toBe("");
@@ -424,17 +434,18 @@ describe("SkillsApp", () => {
       const { container } = render(<SkillsApp />);
       // A panel opened by a click pushed a history entry, so closing goes
       // through history.back(), which jsdom delivers asynchronously.
-      const settle = () => new Promise((r) => setTimeout(r, 10));
       openSkill(container, "back-tuck");
       await act(async () => {
+        const popped = nextPopstate();
         fireEvent.click(screen.getByLabelText("閉じる"));
-        await settle();
+        await popped;
       });
       expect(container.querySelector(".skl-panel.open")).toBeNull();
       openSkill(container, "back-tuck");
       await act(async () => {
+        const popped = nextPopstate();
         fireEvent.keyDown(window, { key: "Escape" });
-        await settle();
+        await popped;
       });
       expect(container.querySelector(".skl-panel.open")).toBeNull();
     });

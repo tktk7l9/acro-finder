@@ -38,8 +38,12 @@ function useHydratedPanelPage() {
   return { id, setId, close };
 }
 
-// jsdom fires popstate from history.back() on a later task.
-const popped = () => new Promise((r) => setTimeout(r, 10));
+// jsdom delivers popstate from history.back()/forward() two setImmediate hops
+// later, so a fixed sleep can lose the race on a loaded machine (it did in
+// Workers Builds). Resolve when the event has actually been dispatched; the
+// app's own listener was registered at mount, so it has already run by then.
+const nextPopstate = () =>
+  new Promise<void>((resolve) => window.addEventListener("popstate", () => resolve(), { once: true }));
 
 describe("usePanelHistory (SHIG 60, 82)", () => {
   beforeEach(() => {
@@ -65,8 +69,9 @@ describe("usePanelHistory (SHIG 60, 82)", () => {
     const { result } = renderHook(usePanelPage);
     act(() => result.current.setId("a"));
     await act(async () => {
+      const popped = nextPopstate();
       window.history.back();
-      await popped();
+      await popped;
     });
     expect(result.current.id).toBeNull();
     expect(window.location.search).toBe("");
@@ -78,8 +83,9 @@ describe("usePanelHistory (SHIG 60, 82)", () => {
     act(() => result.current.setId("a"));
     const apply = vi.fn(() => result.current.setId(null));
     await act(async () => {
+      const popped = nextPopstate();
       result.current.close(apply);
-      await popped();
+      await popped;
     });
     expect(back).toHaveBeenCalledTimes(1);
     expect(apply).toHaveBeenCalledTimes(1);
@@ -142,13 +148,15 @@ describe("usePanelHistory (SHIG 60, 82)", () => {
     const { result } = renderHook(usePanelPage);
     act(() => result.current.setId("a"));
     await act(async () => {
+      const popped = nextPopstate();
       window.history.back();
-      await popped();
+      await popped;
     });
     expect(result.current.id).toBeNull();
     await act(async () => {
+      const popped = nextPopstate();
       window.history.forward();
-      await popped();
+      await popped;
     });
     expect(result.current.id).toBe("a");
   });
