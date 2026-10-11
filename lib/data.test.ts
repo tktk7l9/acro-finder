@@ -60,9 +60,9 @@ const PREFECTURE_BOUNDS: Record<string, [number, number, number, number]> = {
 };
 
 describe("FACILITIES", () => {
-  it("has 224 real facilities with unique ids", () => {
-    expect(FACILITIES).toHaveLength(224);
-    expect(new Set(FACILITIES.map((f) => f.id)).size).toBe(224);
+  it("has 231 real facilities with unique ids", () => {
+    expect(FACILITIES).toHaveLength(231);
+    expect(new Set(FACILITIES.map((f) => f.id)).size).toBe(231);
   });
 
   it("has well-formed core fields on every facility", () => {
