@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, fireEvent, screen, act } from "@testing-library/react";
+import { render, fireEvent, screen, act, waitFor } from "@testing-library/react";
 
 // The Leaflet map can't run in jsdom — stub it so the page logic is testable.
 // The last props it received are kept so tests can assert what the map is told.
@@ -15,6 +15,13 @@ import { renderToString } from "react-dom/server";
 import Page from "./page";
 import { facilitiesInPrefecture, prefectureOptions } from "@/lib/areas";
 import { FACILITIES } from "@/lib/data";
+
+// jsdom delivers popstate from history.back()/forward() two setImmediate hops
+// later, so a fixed sleep can lose the race on a loaded machine (it did in
+// Workers Builds). Resolve when the event has actually been dispatched; the
+// app's own listener was registered at mount, so it has already run by then.
+const nextPopstate = () =>
+  new Promise<void>((resolve) => window.addEventListener("popstate", () => resolve(), { once: true }));
 
 describe("home page", () => {
   // The page reads/writes ?q= and ?f= on the URL; reset it between tests so
@@ -227,8 +234,10 @@ describe("home page", () => {
       (container.querySelector(".detail-close") as HTMLElement).focus();
       close(container);
       expect(container.querySelector(".detail")).toBeNull();
-      await new Promise((r) => setTimeout(r, 0));
-      expect(document.activeElement?.closest(".card")?.getAttribute("data-facility-id")).toBe("f01");
+      // The page hands focus back on a later task, once the card has rendered.
+      await waitFor(() =>
+        expect(document.activeElement?.closest(".card")?.getAttribute("data-facility-id")).toBe("f01"),
+      );
     });
 
     // SHIG 94: opening from a card lands focus in the panel, not on the next card.
@@ -352,8 +361,9 @@ describe("home page", () => {
       expect(container.querySelector(".detail")).not.toBeNull();
       expect(window.location.search).toMatch(/^\?f=/);
       await act(async () => {
+        const popped = nextPopstate();
         window.history.back();
-        await new Promise((r) => setTimeout(r, 10));
+        await popped;
       });
       expect(container.querySelector(".detail")).toBeNull();
       expect(window.location.search).toBe("");
@@ -364,8 +374,9 @@ describe("home page", () => {
       const { container } = render(<Page />);
       fireEvent.click(container.querySelector(".card") as HTMLElement);
       await act(async () => {
+        const popped = nextPopstate();
         fireEvent.click(container.querySelector(".detail-close") as HTMLElement);
-        await new Promise((r) => setTimeout(r, 10));
+        await popped;
       });
       expect(back).toHaveBeenCalledTimes(1);
       expect(container.querySelector(".detail")).toBeNull();
@@ -381,13 +392,16 @@ describe("home page", () => {
       expect(document.activeElement?.classList.contains("detail")).toBe(true);
       (container.querySelector(".detail-close") as HTMLElement).focus();
       await act(async () => {
+        const popped = nextPopstate();
         fireEvent.click(container.querySelector(".detail-close") as HTMLElement);
-        await new Promise((r) => setTimeout(r, 10));
+        await popped;
       });
       expect(container.querySelector(".detail")).toBeNull();
       expect(window.location.search).toBe("");
-      expect(document.activeElement).toBe(
-        container.querySelector('.card[data-facility-id="f01"] .card-open'),
+      await waitFor(() =>
+        expect(document.activeElement).toBe(
+          container.querySelector('.card[data-facility-id="f01"] .card-open'),
+        ),
       );
     });
 
@@ -401,8 +415,9 @@ describe("home page", () => {
       fireEvent.change(input, { target: { value: "MISSION" } });
       expect(container.querySelectorAll(".card")).toHaveLength(2);
       await act(async () => {
+        const popped = nextPopstate();
         fireEvent.click(container.querySelector(".detail-close") as HTMLElement);
-        await new Promise((r) => setTimeout(r, 10));
+        await popped;
       });
       expect(container.querySelector(".detail")).toBeNull();
       expect(input.value).toBe("MISSION");
