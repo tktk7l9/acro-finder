@@ -6771,6 +6771,9 @@ export const FACILITIES: Facility[] = [
       "東京メトロ有楽町線の江戸川橋駅から徒歩6分にあるマンツーマン専門のアクロバット教室。3歳から60代までを対象に、講師が補助につく50分または80分の個別レッスンでバク転などの技を教え、家族や友人との2〜3人のグループレッスンもできる。パーソナルジムGYMFITを併設。",
     photos: [{ label: "バクトレ 新宿江戸川橋店 — 写真準備中", color: "ok-slate" }],
     links: { web: "https://acrobat-bakutore.com/store/shinjuku-edogawabashi" },
+    // f239 (another brand's classroom about 0.7 km away, at a different address) lists the same
+    // number on its official page. Both pages were rechecked on 2026-10-13; they are separate
+    // classrooms, so both entries stay.
     phone: "03-5579-2294",
     price: "¥6,000/回（会員チケット単発 50分・一般・税込）",
     priceDay: "80分 ¥9,000 ・ 4回券 50分 ¥23,000 ・ 初回 50分 ¥5,000 / 80分 ¥8,000（一般）・ 入会金 ¥20,000（新規入会キャンペーンで半額 ¥10,000）（税込）",
@@ -7141,36 +7144,6 @@ export const FACILITIES: Facility[] = [
       types: ["アクロバットコース(年長〜大人)"],
       schedule: "土 18:10〜19:00（開催日はレッスンカレンダーで案内）",
       price: "¥1,500/回 ・ ¥15,000/11回",
-    },
-  },
-  {
-    id: "f225",
-    registeredAt: "2026-10-11",
-    updatedAt: "2026-10-11",
-    name: "徳島市体操協会 佐古教室 アクロバットクラス",
-    nameJa: "一般社団法人 徳島市体操協会 体操教室（佐古教室）",
-    type: "mixed",
-    typeLabel: "体操 / アクロバット",
-    // The class page names the venue only; its street address is from the city's facility page.
-    address: "徳島県徳島市佐古四番町7-1 佐古コミュニティセンター",
-    area: "徳島 / 徳島市",
-    distance: 509,
-    lat: 34.0786,
-    lng: 134.5333,
-    tags: ["アクロバット", "バク転", "徳島市"],
-    description:
-      "一般社団法人 徳島市体操協会が佐古コミュニティセンターで毎週水曜に開く体操教室のアクロバットクラス。小学3年〜中学3年生が転回やバク転などのアクロバティックな技を段階的に練習する。同じクラスは国府・南井上・加茂名のコミュニティセンターでも開いている。",
-    photos: [{ label: "徳島市体操協会 佐古教室 — 写真準備中", color: "ok-lime" }],
-    links: { web: "https://tokushima-gym.com/external/sako" },
-    phone: "088-662-6669",
-    price: "¥4,400/月（月会費）",
-    priceDay: "年間スポーツ保険料 ¥1,000",
-    features: ["経験がなくても参加できる", "申込はメール", "国府（木）・南井上（金）・加茂名（土）でも開講"],
-    lessons: {
-      available: true,
-      types: ["アクロバットクラス(小学3年〜中学3年生)"],
-      schedule: "水 19:00〜19:55",
-      price: "月会費 ¥4,400",
     },
   },
   {
@@ -7575,34 +7548,6 @@ export const FACILITIES: Facility[] = [
     },
   },
   {
-    id: "f238",
-    registeredAt: "2026-10-11",
-    updatedAt: "2026-10-11",
-    name: "バク転パーソナル教室 亀有店",
-    nameJa: "バク転パーソナル教室 亀有",
-    type: "mixed",
-    typeLabel: "アクロバット / バク転",
-    address: "東京都葛飾区西亀有4-13-16",
-    area: "東京 / 葛飾区",
-    distance: 11.4,
-    lat: 35.7644,
-    lng: 139.8404,
-    tags: ["バク転", "マンツーマン", "亀有駅"],
-    description:
-      "千代田線の亀有駅から徒歩10分のバク転パーソナル教室 亀有店。完全予約制のマンツーマンで、エアマットや動画撮影を使いながら側転・ロンダート・バク転などの技を教え、チアダンスも学べる。",
-    photos: [{ label: "バク転パーソナル教室 亀有店 — 写真準備中", color: "ok-lime" }],
-    links: {
-      web: "https://bakuten-personal.com/school/kameari/",
-      instagram: "@bakuten_personal_kameari",
-      youtube: "@bakuten.personal_kyousitstu",
-    },
-    phone: "080-6085-6726",
-    equipment: ["エアマット"],
-    features: ["千代田線 亀有駅から徒歩10分", "定休日 不定休", "マンツーマン指導", "動画撮影で動きを確認", "完全予約制（受付時間9時〜21時）"],
-    booking: { required: true, walkIn: false, methods: ["公式LINE", "メールフォーム"], leadTime: "—" },
-    payment: ["現金", "クレジットカード", "PayPay"],
-  },
-  {
     id: "f239",
     registeredAt: "2026-10-11",
     updatedAt: "2026-10-11",
@@ -7624,6 +7569,9 @@ export const FACILITIES: Facility[] = [
       instagram: "@bakutenpersonal_bunkyoku",
       youtube: "@bakuten.personal_kyousitstu",
     },
+    // Same number as f212 on its official page (a different brand's classroom about 0.7 km away,
+    // at a different address). Both pages were rechecked on 2026-10-13; they are separate
+    // classrooms, so both entries stay.
     phone: "03-5579-2294",
     price: "¥8,000/回（マンツーマン 50分・税込）",
     priceDay: "80分 ¥12,000 ・ 学割 50分 ¥6,000 / 80分 ¥9,000 ・ 初回 50分 ¥5,000（学割 ¥4,000） ・ 入会金 ¥20,000（当日入会で半額 ¥10,000）（税込）",
