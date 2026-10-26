@@ -6,6 +6,7 @@ import { EVENT_TYPES, EVENTS, eventStatus } from "@/lib/events-data";
 import { fmtEventDate, normalizeForSearch, todayJst } from "@/lib/util";
 import { EventCard } from "./EventCard";
 import { FeaturedEvent } from "./FeaturedEvent";
+import { BrandLink } from "./BrandLink";
 
 type StatusFilter = "all" | "open" | "past";
 
@@ -91,13 +92,7 @@ export function EventsFeed() {
   return (
     <div className="events-app">
       <header className="topbar">
-        <a href="/" className="brand" aria-label="ACRO/FINDER ホーム">
-          <div className="brand-mark">A</div>
-          <div>
-            ACRO<span style={{ color: "var(--ink-3)" }}>/</span>FINDER
-            <div className="jp">アクロバット練習施設</div>
-          </div>
-        </a>
+        <BrandLink />
         <TopNav active="events" badges={{ events: EVENTS.length }} />
         <div className="search">
           <span className="search-icon">⌕</span>

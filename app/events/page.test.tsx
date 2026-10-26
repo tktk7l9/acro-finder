@@ -5,7 +5,7 @@ import EventsPage, { metadata } from "./page";
 describe("events page", () => {
   it("renders the events feed", () => {
     render(<EventsPage />);
-    expect(screen.getByRole("link", { name: "ACRO/FINDER ホーム" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "ACRO/FINDER アクロバット練習施設" })).toBeInTheDocument();
     expect(screen.getByPlaceholderText("大会名・会場・タグで検索")).toBeInTheDocument();
   });
 
