@@ -89,6 +89,13 @@ describe("submitContactForm", () => {
     expect(mail.text).toContain(valid.message);
   });
 
+  it("bounds the Resend call with a timeout signal", async () => {
+    await submitContactForm(prev, form(valid));
+    const options = send.mock.calls[0][1];
+    expect(options.signal).toBeInstanceOf(AbortSignal);
+    expect(options.signal.aborted).toBe(false);
+  });
+
   it("falls back to the Resend onboarding sender when the from address is blank", async () => {
     // RESEND_FROM_EMAIL is stubbed to "" in beforeEach — a set-but-empty
     // variable, which is what a blank secret looks like at runtime.

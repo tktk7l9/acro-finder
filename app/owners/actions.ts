@@ -12,6 +12,12 @@ function readField(formData: FormData, key: string): string {
 // In-memory fixed-window rate limit. On serverless it is per-instance, but it
 // still blocks rapid repeats (spam / Resend quota waste) to a single instance.
 const RATE_LIMIT = { perIp: 3, global: 20, windowMs: 10 * 60_000 };
+
+// Upper bound on one call to the Resend API. The SDK's fetch has no timeout of its
+// own, so a stalled connection would keep the Server Action (and the user's
+// "送信中…") hanging until the Worker gives up. An aborted request surfaces as the
+// SDK's `error` result and is reported as "server" like any other failure.
+const RESEND_TIMEOUT_MS = 15_000;
 const rateBuckets = new Map<string, { count: number; resetAt: number }>();
 
 function takeRateSlot(key: string, limit: number): boolean {
@@ -81,20 +87,23 @@ export async function submitContactForm(
 
   try {
     const resend = new Resend(apiKey);
-    const { error } = await resend.emails.send({
-      from,
-      to,
-      replyTo: email,
-      subject: `[ACRO/FINDER 掲載] ${subject}`,
-      text: [
-        `お名前: ${name}`,
-        `メール: ${email}`,
-        `ご用件: ${subject}`,
-        "",
-        "メッセージ:",
-        message,
-      ].join("\n"),
-    });
+    const { error } = await resend.emails.send(
+      {
+        from,
+        to,
+        replyTo: email,
+        subject: `[ACRO/FINDER 掲載] ${subject}`,
+        text: [
+          `お名前: ${name}`,
+          `メール: ${email}`,
+          `ご用件: ${subject}`,
+          "",
+          "メッセージ:",
+          message,
+        ].join("\n"),
+      },
+      { signal: AbortSignal.timeout(RESEND_TIMEOUT_MS) },
+    );
 
     if (error) {
       console.error("[owners contact] Resend error:", error);
