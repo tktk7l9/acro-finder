@@ -15,6 +15,7 @@ import { SkillArt } from "./SkillArt";
 import { SkillGraph } from "./SkillGraph";
 import { normalizeForSearch } from "@/lib/util";
 import { usePanelHistory } from "@/lib/panel-history";
+import { BrandLink } from "./BrandLink";
 
 type LayoutMode = "grid" | "list" | "graph";
 
@@ -228,13 +229,7 @@ export function SkillsApp() {
   return (
     <div className="skills-app">
       <header className="topbar">
-        <a href="/" className="brand" aria-label="ACRO/FINDER ホーム">
-          <div className="brand-mark">A</div>
-          <div>
-            ACRO<span style={{ color: "var(--ink-3)" }}>/</span>FINDER
-            <div className="jp">アクロバット練習施設</div>
-          </div>
-        </a>
+        <BrandLink />
         <TopNav active="skills" badges={{ skills: SKILLS.length }} />
         <div className="search">
           <span className="search-icon">⌕</span>
