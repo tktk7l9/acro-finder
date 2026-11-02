@@ -92,7 +92,7 @@ export const FACILITIES: Facility[] = [
   {
     id: "f03",
     registeredAt: "2026-05-21",
-    updatedAt: "2026-05-21",
+    updatedAt: "2026-11-02",
     name: "アクロバットジム ホワイト 錦糸町店",
     nameJa: "アクロバットジム ホワイト 錦糸町",
     type: "mixed",
@@ -106,9 +106,9 @@ export const FACILITIES: Facility[] = [
     description:
       "錦糸町駅近くの鉄鋼倉庫をリノベしたアクロバット施設。15mエアマットを備え、バク転からパルクール・トリッキングまで対応。",
     photos: [{ label: "アクロバットジム ホワイト 錦糸町 — 写真準備中", color: "ok-slate" }],
-    links: { web: "https://acrowhite.com", instagram: "@acrowhite" },
+    links: { web: "https://acrowhite.com/locations/kinshicho", instagram: "@acrowhite" },
     image: "https://acrowhite.com/wpw/wp-content/uploads/2020/03/white_black.jpg",
-    phone: "080-4901-0902",
+    phone: "03-6310-7967",
     hours: [
       { day: "月", time: "16:00 - 21:00" },
       { day: "火", time: "16:00 - 21:00" },
@@ -868,7 +868,7 @@ export const FACILITIES: Facility[] = [
   {
     id: "f24",
     registeredAt: "2026-05-21",
-    updatedAt: "2026-06-25",
+    updatedAt: "2026-11-02",
     name: "アクロバットジム ホワイト 荻窪店",
     nameJa: "アクロバットジム ホワイト 荻窪",
     type: "mixed",
@@ -882,9 +882,9 @@ export const FACILITIES: Facility[] = [
     description:
       "杉並区・荻窪のアクロバット教室。タンブリングフロアやエアマットを備え、アクロバット・パルクールに加え、荻窪店独自のパワームーブ専門クラスを開講する。",
     photos: [{ label: "アクロバットジム ホワイト 荻窪店 — 写真準備中", color: "ok-slate" }],
-    links: { web: "https://acrowhite.com/", instagram: "@acrowhite" },
+    links: { web: "https://acrowhite.com/locations/ogikubo", instagram: "@acrowhite" },
     image: "https://acrowhite.com/wpw/wp-content/uploads/2020/03/white_black.jpg",
-    phone: "070-6516-8768",
+    phone: "03-4361-0287",
     equipment: ["タンブリングフロア", "クッションフロア", "エアマット", "エバーマット", "ミニトランポリン", "大型ミラー"],
     features: ["タンブリングフロア完備", "パワームーブ専門クラス（荻窪店限定）", "初心者対応"],
     lessons: {
@@ -896,7 +896,7 @@ export const FACILITIES: Facility[] = [
     booking: {
       required: true,
       walkIn: false,
-      methods: ["電話 070-6516-8768", "RESERVA（オンライン）"],
+      methods: ["電話 03-4361-0287", "RESERVA（オンライン）"],
       leadTime: "前日まで（当日予約は +¥500）",
     },
   },
@@ -1530,7 +1530,7 @@ export const FACILITIES: Facility[] = [
   {
     id: "f48",
     registeredAt: "2026-05-21",
-    updatedAt: "2026-05-21",
+    updatedAt: "2026-11-02",
     name: "大和トリッキング教室 本厚木スタジオ",
     nameJa: "やまとトリッキング 本厚木",
     type: "tricking",
@@ -1544,7 +1544,7 @@ export const FACILITIES: Facility[] = [
     description:
       "厚木市のトリッキング教室。大和トリッキングの系列スタジオで、現役パフォーマーがトリッキング・アクロバット・殺陣・アクションを指導する。",
     photos: [{ label: "大和トリッキング教室 本厚木スタジオ — 写真準備中", color: "ok-slate" }],
-    links: { web: "https://www.yamato-tricking.jp/", instagram: "@yamatotrickingstudio" },
+    links: { web: "https://www.y-atsugi-acrobat.com/", instagram: "@yamatotrickingstudio" },
     features: ["現役パフォーマーが指導", "キッズ〜大人・初心者対応"],
     lessons: {
       available: true,
@@ -1558,7 +1558,7 @@ export const FACILITIES: Facility[] = [
   {
     id: "f49",
     registeredAt: "2026-05-21",
-    updatedAt: "2026-05-21",
+    updatedAt: "2026-11-02",
     name: "大和トリッキング教室 東戸塚スタジオ",
     nameJa: "やまとトリッキング 東戸塚",
     type: "tricking",
@@ -1572,7 +1572,7 @@ export const FACILITIES: Facility[] = [
     description:
       "横浜・東戸塚のトリッキング教室。大和トリッキングの系列スタジオで、現役パフォーマーがトリッキング・アクロバット・殺陣・アクションを指導する。",
     photos: [{ label: "大和トリッキング教室 東戸塚スタジオ — 写真準備中", color: "ok-lime" }],
-    links: { web: "https://www.yamato-tricking.jp/", instagram: "@yamatotrickingstudio" },
+    links: { web: "https://www.y-totsuka-acrobat.com/", instagram: "@yamatotrickingstudio" },
     features: ["現役パフォーマーが指導", "キッズ〜大人・初心者対応"],
     lessons: {
       available: true,
@@ -1586,7 +1586,7 @@ export const FACILITIES: Facility[] = [
   {
     id: "f50",
     registeredAt: "2026-05-21",
-    updatedAt: "2026-05-21",
+    updatedAt: "2026-11-02",
     name: "大和トリッキング教室 小机スタジオ",
     nameJa: "やまとトリッキング 小机",
     type: "tricking",
@@ -1600,7 +1600,7 @@ export const FACILITIES: Facility[] = [
     description:
       "横浜・小机のトリッキング教室。大和トリッキングの系列スタジオで、現役パフォーマーがトリッキング・アクロバット・殺陣・アクションを指導する。",
     photos: [{ label: "大和トリッキング教室 小机スタジオ — 写真準備中", color: "ok-amber" }],
-    links: { web: "https://www.yamato-tricking.jp/", instagram: "@yamatotrickingstudio" },
+    links: { web: "https://www.y-kozukue-acrobat.com/", instagram: "@yamatotrickingstudio" },
     image: "https://image.jimcdn.com/app/cms/image/transf/none/path/s575d64a5569cf7cd/image/i3370ee8842e51584/version/1656758621/image.jpg",
     features: ["現役パフォーマーが指導", "少人数制（最大4名）", "小学生〜大人・初心者対応"],
     lessons: {
@@ -1614,7 +1614,7 @@ export const FACILITIES: Facility[] = [
   {
     id: "f51",
     registeredAt: "2026-05-21",
-    updatedAt: "2026-05-21",
+    updatedAt: "2026-11-02",
     name: "大和トリッキング教室 大口スタジオ",
     nameJa: "やまとトリッキング 大口",
     type: "tricking",
@@ -1628,7 +1628,7 @@ export const FACILITIES: Facility[] = [
     description:
       "横浜・大口のトリッキング教室。大和トリッキングの系列スタジオで、現役パフォーマーがトリッキング・アクロバット・殺陣・アクションを指導する。",
     photos: [{ label: "大和トリッキング教室 大口スタジオ — 写真準備中", color: "ok-slate" }],
-    links: { web: "https://www.yamato-tricking.jp/", instagram: "@yamatotrickingstudio" },
+    links: { web: "https://www.y-ooguchi-acrobat.com/", instagram: "@yamatotrickingstudio" },
     image: "https://image.jimcdn.com/app/cms/image/transf/none/path/s575d64a5569cf7cd/image/i3370ee8842e51584/version/1656758621/image.jpg",
     features: ["現役パフォーマーが指導", "少人数制（最大4名）", "小学生〜大人・初心者対応"],
     lessons: {
@@ -1642,7 +1642,7 @@ export const FACILITIES: Facility[] = [
   {
     id: "f52",
     registeredAt: "2026-05-21",
-    updatedAt: "2026-05-21",
+    updatedAt: "2026-11-02",
     name: "大和トリッキング教室 南林間スタジオ",
     nameJa: "やまとトリッキング 南林間",
     type: "tricking",
@@ -1656,7 +1656,7 @@ export const FACILITIES: Facility[] = [
     description:
       "大和・南林間のトリッキング教室。大和トリッキングの系列スタジオで、現役パフォーマーがトリッキング・アクロバット・殺陣・アクションを指導する。",
     photos: [{ label: "大和トリッキング教室 南林間スタジオ — 写真準備中", color: "ok-lime" }],
-    links: { web: "https://www.yamato-tricking.jp/", instagram: "@yamatotrickingstudio" },
+    links: { web: "https://www.y-minami-rinkan-acrobat.com/", instagram: "@yamatotrickingstudio" },
     image: "https://image.jimcdn.com/app/cms/image/transf/none/path/s575d64a5569cf7cd/image/i3370ee8842e51584/version/1656758621/image.jpg",
     features: ["現役パフォーマーが指導", "少人数制（最大4名）", "小学生〜大人・初心者対応"],
     lessons: {
