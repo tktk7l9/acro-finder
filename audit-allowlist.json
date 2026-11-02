@@ -1,1 +1,16 @@
-[]
+[
+  {
+    "id": "GHSA-g3hv-75wg-m249",
+    "package": "minimatch",
+    "devOnly": true,
+    "expires": "2026-12-03",
+    "reason": "Fixed only in minimatch 11.0.1+. Reached at lint and build time through eslint plugins pinned to 3.x and other tooling on 9.x/10.x, which would break under a cross-major override; patterns come from this repository; not shipped to production."
+  },
+  {
+    "id": "GHSA-3g3m-2fjr-6pw4",
+    "package": "glob",
+    "devOnly": true,
+    "expires": "2026-12-03",
+    "reason": "Fixed only in a newer glob major than @node-minify/core and @opennextjs/cloudflare allow. Build-time tooling with no AbortSignal timeouts from untrusted input; not shipped to production."
+  }
+]
